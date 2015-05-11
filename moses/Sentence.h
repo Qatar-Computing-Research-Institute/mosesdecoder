@@ -114,6 +114,10 @@ public:
   void
   init(std::string line, std::vector<FactorType> const& factorOrder);
 
+  //Reinitialize sentence after new words have been added
+  void
+  reinit();
+
 private:
   // auxliliary functions for Sentence initialization
   // void aux_interpret_sgml_markup(std::string& line);
