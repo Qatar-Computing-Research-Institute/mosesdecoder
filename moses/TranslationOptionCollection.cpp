@@ -706,6 +706,7 @@ TranslationOptionList*
 TranslationOptionCollection::
 GetTranslationOptionList(size_t const sPos, size_t const ePos)
 {
+  std::cerr << "sPos: " <<sPos << " ePos:" << ePos << "Colsize:"<< m_collection.size() <<endl;
   UTIL_THROW_IF2(sPos >= m_collection.size(), "Out of bound access.");
   vector<TranslationOptionList>& tol = m_collection[sPos];
   size_t idx = ePos - sPos;
