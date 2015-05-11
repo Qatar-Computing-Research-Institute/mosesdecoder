@@ -419,7 +419,7 @@ ExpandTranslationOptions()
     size_t backoff = dg.GetBackoff();
     
     // iterate over spans with variable start position but all the way to include the last position
-    size_t ePos = size;
+    size_t ePos = size -1 ;
 
     for (size_t sPos = 0 ; sPos < size; sPos++) {
       size_t maxSize = size - sPos; // don't go over end of sentence
@@ -449,6 +449,7 @@ ExpandTranslationOptions()
 
   // sv: !!! needs also to be investigated
   CacheLexReordering(); // Cached lex reodering costs
+
 }
 
 
