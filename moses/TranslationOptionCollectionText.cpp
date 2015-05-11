@@ -163,6 +163,13 @@ void TranslationOptionCollectionText::CreateTranslationOptions()
   TranslationOptionCollection::CreateTranslationOptions();
 }
 
+void TranslationOptionCollectionText::ExpandTranslationOptions()
+{
+  GetTargetPhraseCollectionBatch();
+  TranslationOptionCollection::ExpandTranslationOptions();
+}
+
+
 /** create translation options that exactly cover a specific input span.
  * Called by CreateTranslationOptions() and ProcessUnknownWord()
  * \param decodeGraph list of decoding steps

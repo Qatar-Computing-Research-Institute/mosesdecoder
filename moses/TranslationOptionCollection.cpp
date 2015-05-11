@@ -389,6 +389,68 @@ CreateTranslationOptions()
   CacheLexReordering(); // Cached lex reodering costs
 }
 
+/*
+  For stream decoding we only need to find the tranlation optionis for the newly added word.
+  This is for all the source phrases including the last word
+*/
+
+TranslationOptionCollection::
+ExpandTranslationOptions()
+{
+  // loop over all substrings of the source sentence, look them up
+  // in the phraseDictionary (which is the- possibly filtered-- phrase
+  // table loaded on initialization), generate TranslationOption objects
+  // for all phrases
+
+  // there may be multiple decoding graphs (factorizations of decoding)
+  const vector <DecodeGraph*> &decodeGraphList
+  = StaticData::Instance().GetDecodeGraphs();
+
+  // length of the sentence
+  const size_t size = m_source.GetSize();
+
+  // loop over all decoding graphs, each generates translation options
+  for (size_t gidx = 0 ; gidx < decodeGraphList.size() ; gidx++) {
+    if (decodeGraphList.size() > 1)
+      VERBOSE(3,"Creating translation options from decoding graph " << gidx << endl);
+
+    const DecodeGraph& dg = *decodeGraphList[gidx];
+    size_t backoff = dg.GetBackoff();
+    
+    // iterate over spans with variable start position but all the way to include the last position
+    ePos = size;
+
+    for (size_t sPos = 0 ; sPos < size; sPos++) {
+      size_t maxSize = size - sPos; // don't go over end of sentence
+      size_t maxSizePhrase = StaticData::Instance().GetMaxPhraseLength();
+      maxSize = std::min(maxSize, maxSizePhrase);
+
+      //for (size_t ePos = sPos ; ePos < sPos + maxSize ; ePos++) {
+
+        if (gidx && backoff &&
+            (ePos-sPos+1 <= backoff || // size exceeds backoff limit (HUH? UG) or ...
+             m_collection[sPos][ePos-sPos].size() > 0)) {
+          VERBOSE(3,"No backoff to graph " << gidx << " for span [" << sPos << ";" << ePos << "]" << endl);
+          continue;
+        }
+        CreateTranslationOptionsForRange(dg, sPos, ePos, true, gidx);
+      //}
+    }
+  }
+  
+  ProcessUnknownWord();
+  EvaluateWithSourceContext();
+  VERBOSE(3,"Translation Option Collection\n " << *this << endl);
+  Prune();
+  Sort();
+  // sv: !!! the future cost calculation needs to be modified to remove redundant calculation
+  CalcFutureScore(); // future score matrix
+
+  // sv: !!! needs also to be investigated
+  CacheLexReordering(); // Cached lex reodering costs
+}
+
+
 
 bool
 TranslationOptionCollection::

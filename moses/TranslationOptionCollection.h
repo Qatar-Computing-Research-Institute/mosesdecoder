@@ -141,6 +141,9 @@ public:
   //! Create all possible translations from the phrase tables
   virtual void CreateTranslationOptions();
 
+  //! Create all possible translations from the phrase tables for the source phrases, which include the latest word
+  virtual void ExpandTranslationOptions();
+
   //! Create translation options that exactly cover a specific input span.
   virtual
   bool

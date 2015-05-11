@@ -117,7 +117,10 @@ void Manager::Decode()
   IFVERBOSE(1) {
     GetSentenceStats().StartTimeCollectOpts();
   }
-  m_transOptColl->CreateTranslationOptions();
+
+  // sv: for now we are interested in the stream decoding only
+  //m_transOptColl->CreateTranslationOptions();
+  m_transOptColl->ExpandTranslationOptions();
 
   // some reporting on how long this took
   IFVERBOSE(1) {
