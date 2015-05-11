@@ -70,8 +70,13 @@ TranslationTask
 TranslationTask::~TranslationTask()
 { }
 
+boost::shared_ptr<BaseManager> 
+  TranslationTask
+  ::GetManager(){
+    return m_manager;
+  }
 
-boost::shared_ptr<BaseManager>
+void
 TranslationTask
 ::SetupManager(SearchAlgorithm algo)
 {
@@ -116,7 +121,80 @@ TranslationTask
   else // original SCFG manager
     manager.reset(new ChartManager(this->self()));
 
-  return manager;
+  m_manager = manager;
+  return;
+}
+
+void TranslationTask
+::Continue()
+{
+  // shorthand for "global data"
+  const size_t translationId = m_source->GetTranslationId();
+  Timer translationTime;
+  translationTime.start();
+  
+  boost::shared_ptr<Manager>manager =  boost::static_pointer_cast<Manager>(m_manager);
+  manager->ContinueDecode();
+
+    // new: stop here if m_ioWrapper is NULL. This means that the
+    // owner of the TranslationTask will take care of the output
+    // oh, and by the way, all the output should be handled by the
+    // output wrapper along the lines of *m_iwWrapper << *manager;
+    // Just sayin' ...
+    if (m_ioWrapper == NULL) return;
+    // we are done with search, let's look what we got
+    OutputCollector* ocoll;
+    Timer additionalReportingTime;
+    additionalReportingTime.start();
+
+    boost::shared_ptr<IOWrapper> const& io = m_ioWrapper;
+    manager->OutputBest(io->GetSingleBestOutputCollector());
+
+    // output word graph
+    manager->OutputWordGraph(io->GetWordGraphCollector());
+
+    // output search graph
+    manager->OutputSearchGraph(io->GetSearchGraphOutputCollector());
+
+    // ???
+    manager->OutputSearchGraphSLF();
+
+    // Output search graph in hypergraph format for Kenneth Heafield's
+    // lazy hypergraph decoder; writes to stderr
+    manager->OutputSearchGraphHypergraph();
+
+    additionalReportingTime.stop();
+
+    additionalReportingTime.start();
+
+    // output n-best list
+    manager->OutputNBest(io->GetNBestOutputCollector());
+
+    //lattice samples
+    manager->OutputLatticeSamples(io->GetLatticeSamplesCollector());
+
+    // detailed translation reporting
+    ocoll = io->GetDetailedTranslationCollector();
+    manager->OutputDetailedTranslationReport(ocoll);
+
+    ocoll = io->GetDetailTreeFragmentsOutputCollector();
+    manager->OutputDetailedTreeFragmentsTranslationReport(ocoll);
+
+    //list of unknown words
+    manager->OutputUnknowns(io->GetUnknownsCollector());
+
+    manager->OutputAlignment(io->GetAlignmentInfoCollector());
+
+    // report additional statistics
+    manager->CalcDecoderStatistics();
+    VERBOSE(1, "Line " << translationId << ": Additional reporting took "
+            << additionalReportingTime << " seconds total" << endl);
+    VERBOSE(1, "Line " << translationId << ": Translation took "
+            << translationTime << " seconds total" << endl);
+    IFVERBOSE(2) {
+      PrintUserTime("Sentence Decoding Time:");
+    }
+
 }
 
 void TranslationTask::Run()
@@ -145,7 +223,8 @@ void TranslationTask::Run()
   Timer initTime;
   initTime.start();
 
-  boost::shared_ptr<BaseManager> manager = SetupManager();
+  SetupManager();
+  boost::shared_ptr<BaseManager> manager = m_manager;
 
   VERBOSE(1, "Line " << translationId << ": Initialize search took "
           << initTime << " seconds total" << endl);
@@ -158,7 +237,6 @@ void TranslationTask::Run()
   // output wrapper along the lines of *m_iwWrapper << *manager;
   // Just sayin' ...
   if (m_ioWrapper == NULL) return;
-
   // we are done with search, let's look what we got
   OutputCollector* ocoll;
   Timer additionalReportingTime;

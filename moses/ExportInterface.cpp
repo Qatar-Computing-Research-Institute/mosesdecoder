@@ -329,32 +329,50 @@ run_as_stream()
     IFVERBOSE(1) ResetUserTime();
 
      boost::shared_ptr<Sentence> source_sent =  boost::static_pointer_cast<Sentence>(source_sentence);
+
     size_t size = source_sent->GetSize();
+    boost::shared_ptr<TranslationTask>
+    task = TranslationTask::create(source, ioWrapper);
+    task->SetContextString(context_string);
+
 
     for (size_t sPos = 0 ; sPos < size ; ++sPos) {
-
+      
+      std::cerr << "looping "<<sPos <<endl;
       const Word & source_word = source_sent->GetWord(sPos);
       source->AddWord(source_word);
       source->reinit();
+      //source = source_sentence;
 
       FeatureFunction::CallChangeSource(source.get());
+      std::cerr << "looping "<<sPos <<endl;
 
       // set up task of translating one sentence
-      boost::shared_ptr<TranslationTask>
-      task = TranslationTask::create(source, ioWrapper);
-      task->SetContextString(context_string);
+
 
       // Allow for (sentence-)context-specific processing prior to
       // decoding. This can be used, for example, for context-sensitive
       // phrase lookup.
       FeatureFunction::SetupAll(*task);
+      std::cerr << "looping "<<sPos <<endl;
 
       // execute task
   /*#ifdef WITH_THREADS
       pool.Submit(task);
   #else*/
-      task->Run();
+      if(sPos == 0)
+        {
+          std::cerr << "run "<<sPos <<endl;
+          task->Run();
+        }
+      else
+        {
+          std::cerr << "continue "<<sPos <<endl;
+          task->Continue();
+        }
+
     }
+    //source.reset(new Sentence);
 /*#endif
 */ 
 }
@@ -418,7 +436,7 @@ int decoder_main(int argc, char** argv)
     //if (params.GetParam("server"))
     //  return run_as_server();
     //else if (params.GetParam("stream"))
-    std::cerr<<"Running as Stream";
+    std::cerr<<"**** Running as Stream" << endl;
       return run_as_stream();
     //else
     //  return batch_run();

@@ -394,6 +394,7 @@ CreateTranslationOptions()
   This is for all the source phrases including the last word
 */
 
+void 
 TranslationOptionCollection::
 ExpandTranslationOptions()
 {
@@ -418,7 +419,7 @@ ExpandTranslationOptions()
     size_t backoff = dg.GetBackoff();
     
     // iterate over spans with variable start position but all the way to include the last position
-    ePos = size;
+    size_t ePos = size;
 
     for (size_t sPos = 0 ; sPos < size; sPos++) {
       size_t maxSize = size - sPos; // don't go over end of sentence

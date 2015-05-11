@@ -72,11 +72,13 @@ public:
 #ifdef WITH_THREADS
     boost::mutex::scoped_lock lock(m_mutex);
 #endif
-    if (sourceId == m_nextOutput) {
+    //changed this for streaming decoding, we don't want this restriction PG
+    if (sourceId <= m_nextOutput) {
       //This is the one we were expecting
       *m_outStream << output << std::flush;
       *m_debugStream << debug << std::flush;
-      ++m_nextOutput;
+      //but we don't want to mess the indices, PG
+      if(sourceId == m_nextOutput) ++m_nextOutput;
       //see if there's any more
       std::map<int,std::string>::iterator iter;
       while ((iter = m_outputs.find(m_nextOutput)) != m_outputs.end()) {
