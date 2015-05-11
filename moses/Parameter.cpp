@@ -53,6 +53,7 @@ Parameter::Parameter()
 
   AddParam(main_opts,"verbose", "v", "verbosity level of the logging");
   AddParam(main_opts,"show-weights", "print feature weights and exit");
+  AddParam(main_opts,"stream", "use moses for stream inputs");
   AddParam(main_opts,"time-out", "seconds after which is interrupted (-1=no time-out, default is -1)");
 
   ///////////////////////////////////////////////////////////////////////////////////////
