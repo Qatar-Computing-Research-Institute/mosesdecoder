@@ -285,98 +285,6 @@ batch_run()
 #endif
 }
 
-int
-run_as_stream()
-{
-  // shorthand for accessing information in StaticData
-  const StaticData& staticData = StaticData::Instance();
-
-  //initialise random numbers
-  util::rand_init();
-
-  IFVERBOSE(1) PrintUserTime("Created input-output object STREAM");
-
-  // set up read/writing class:
-  boost::shared_ptr<IOWrapper> ioWrapper(new IOWrapper);
-  UTIL_THROW_IF2(ioWrapper == NULL, "Error; Failed to create IO object"
-                 << " [" << HERE << "]");
-
-  // check on weights
-  const ScoreComponentCollection& weights = staticData.GetAllWeights();
-  IFVERBOSE(2) {
-    TRACE_ERR("The global weight vector looks like this: ");
-    TRACE_ERR(weights);
-    TRACE_ERR("\n");
-  }
-
-/*#ifdef WITH_THREADS
-  ThreadPool pool(staticData.ThreadCount());
-#endif*/
-
-  std::string context_string;
-  params.SetParameter(context_string,"context-string",string(""));
-
-  // main loop over set of input sentences
-
-  boost::shared_ptr<InputType> source_sentence;
-  boost::shared_ptr<Sentence> source;
-
-  source.reset(new Sentence );
-
-  while ((source_sentence = ioWrapper->ReadInput()) != NULL) {
-
-
-    IFVERBOSE(1) ResetUserTime();
-
-     boost::shared_ptr<Sentence> source_sent =  boost::static_pointer_cast<Sentence>(source_sentence);
-    size_t size = source_sent->GetSize();
-
-    for (size_t sPos = 0 ; sPos < size ; ++sPos) {
-
-      const Word & source_word = source_sent->GetWord(sPos);
-      source->AddWord(source_word);
-      source->reinit();
-
-      FeatureFunction::CallChangeSource(source.get());
-
-      // set up task of translating one sentence
-      boost::shared_ptr<TranslationTask>
-      task = TranslationTask::create(source, ioWrapper);
-      task->SetContextString(context_string);
-
-      // Allow for (sentence-)context-specific processing prior to
-      // decoding. This can be used, for example, for context-sensitive
-      // phrase lookup.
-      FeatureFunction::SetupAll(*task);
-
-      // execute task
-  /*#ifdef WITH_THREADS
-      pool.Submit(task);
-  #else*/
-      task->Run();
-    }
-/*#endif
-*/ 
-}
-
-  // we are done, finishing up
-/*#ifdef WITH_THREADS
-  pool.Stop(true); //flush remaining jobs
-#endif
-*/
-  FeatureFunction::Destroy();
-
-  IFVERBOSE(1) util::PrintUsage(std::cerr);
-
-#ifndef EXIT_RETURN
-  //This avoids that destructors are called (it can take a long time)
-  exit(EXIT_SUCCESS);
-#else
-  return EXIT_SUCCESS;
-#endif
-}
-
-
 /** Called by main function of the command line version of the decoder **/
 int decoder_main(int argc, char** argv)
 {
@@ -415,13 +323,10 @@ int decoder_main(int argc, char** argv)
       exit(0);
     }
 
-    //if (params.GetParam("server"))
-    //  return run_as_server();
-    //else if (params.GetParam("stream"))
-    std::cerr<<"Running as Stream";
-      return run_as_stream();
-    //else
-    //  return batch_run();
+    if (params.GetParam("server"))
+      return run_as_server();
+    else
+      return batch_run();
 
   }
 #ifdef NDEBUG
