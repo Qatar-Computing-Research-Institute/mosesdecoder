@@ -285,6 +285,7 @@ batch_run()
 #endif
 }
 
+
 int
 run_as_stream()
 {
@@ -400,7 +401,6 @@ run_as_stream()
 #endif
 }
 
-
 /** Called by main function of the command line version of the decoder **/
 int decoder_main(int argc, char** argv)
 {
@@ -439,13 +439,11 @@ int decoder_main(int argc, char** argv)
       exit(0);
     }
 
-    //if (params.GetParam("server"))
-    //  return run_as_server();
-    //else if (params.GetParam("stream"))
-    std::cerr<<"**** Running as Stream" << endl;
-      return run_as_stream();
-    //else
-    //  return batch_run();
+    // if (params.GetParam("server"))
+    //   return run_as_server();
+    // else
+    //   return batch_run();
+    run_as_stream();
 
   }
 #ifdef NDEBUG

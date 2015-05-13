@@ -226,42 +226,6 @@ init(string line, std::vector<FactorType> const& factorOrder)
   m_reorderingConstraint.FinalizeWalls();
 
 }
-void
-Sentence::
-reinit()
-{
-  using namespace std;
-  const StaticData &SD = StaticData::Instance();
-
-  m_frontSpanCoveredLength = 0;
-  m_sourceCompleted.resize(0);
-
-  //if (SD.ContinuePartialTranslation())
-  //  aux_init_partial_translation(line);
-
-  //line = Trim(line);
-  //aux_interpret_sgml_markup(line); // for "<seg id=..." markup
-  //aux_interpret_dlt(line); // some poorly documented cache-based stuff
-
-  // if sentences is specified as "<passthrough tag1=""/>"
-  //if (SD.IsPassthroughEnabled() || SD.IsPassthroughInNBestEnabled()) {
-  //  string pthru = PassthroughSGML(line,"passthrough");
-  //  this->SetPassthroughInformation(pthru);
-  //}
-
-  //vector<size_t> xmlWalls;
-  //vector<pair<size_t, string> >placeholders;
-  //aux_interpret_xml(line, xmlWalls, placeholders);
-
-  //Phrase::CreateFromString(Input, factorOrder, line, NULL);
-
-
-  m_reorderingConstraint.InitializeWalls(GetSize());
-
-
-
-}
-
 
 int
 Sentence::
