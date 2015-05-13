@@ -404,41 +404,59 @@ ExpandTranslationOptions()
   // for all phrases
 
   // there may be multiple decoding graphs (factorizations of decoding)
-  const vector <DecodeGraph*> &decodeGraphList
-  = StaticData::Instance().GetDecodeGraphs();
+  
+  // PG we add an additional position to the collection
+  m_collection.push_back( vector< TranslationOptionList >() );
+  m_collection[m_collection.size()-1].push_back( TranslationOptionList() );
+
+  VERBOSE(1,"CreateTranslationOptions" << endl);
+
+  // loop over all substrings of the source sentence, look them up
+  // in the phraseDictionary (which is the- possibly filtered-- phrase
+  // table loaded on initialization), generate TranslationOption objects
+  // for all phrases
+
+  // there may be multiple decoding graphs (factorizations of decoding)
+  const vector <DecodeGraph*> &decodeGraphList = StaticData::Instance().GetDecodeGraphs();
 
   // length of the sentence
   const size_t size = m_source.GetSize();
+  size_t sPos = 0 ;
+  bool StreamDecoding = true;
 
-  // loop over all decoding graphs, each generates translation options
-  for (size_t gidx = 0 ; gidx < decodeGraphList.size() ; gidx++) {
-    if (decodeGraphList.size() > 1)
-      VERBOSE(3,"Creating translation options from decoding graph " << gidx << endl);
+  if ( StreamDecoding ) {
+    VERBOSE(1, "Get Translation Options for Stream Decoding" <<endl);
 
-    const DecodeGraph& dg = *decodeGraphList[gidx];
-    size_t backoff = dg.GetBackoff();
-    
-    // iterate over spans with variable start position but all the way to include the last position
-    size_t ePos = size -1 ;
-    size_t maxSizePhrase = StaticData::Instance().GetMaxPhraseLength();
-    size_t startPosition = std::max(size_t(0),size-maxSizePhrase);
+    // we only create translation options for spans including the last word
+    // ie spans go from 
 
-    for (size_t sPos = startPosition ; sPos < size; sPos++) {
-      //size_t maxSize = size - sPos; // don't go over end of sentence
+    for (size_t gidx = 0 ; gidx < decodeGraphList.size() ; gidx++) {
+      if (decodeGraphList.size() > 1)
+        VERBOSE(1,"Creating translation options from decoding graph " << gidx << endl);
+
+      const DecodeGraph& dg = *decodeGraphList[gidx];
+      size_t backoff = dg.GetBackoff();
+      // iterate over spans
       
-      //maxSize = std::min(maxSize, maxSizePhrase);
+      for (; sPos < size; sPos++) {
+        size_t maxSize = size - sPos; // don't go over end of sentence
+        size_t maxSizePhrase = StaticData::Instance().GetMaxPhraseLength();
+        maxSize = std::min(maxSize, maxSizePhrase);
 
-      //for (size_t ePos = sPos ; ePos < sPos + maxSize ; ePos++) {
-
-        if (gidx && backoff &&
-            (ePos-sPos+1 <= backoff || // size exceeds backoff limit (HUH? UG) or ...
-             m_collection[sPos][ePos-sPos].size() > 0)) {
-          VERBOSE(3,"No backoff to graph " << gidx << " for span [" << sPos << ";" << ePos << "]" << endl);
-          continue;
-        }
+        size_t ePos = size - 1;
+        //for (size_t ePos = sPos ; ePos < sPos + maxSize ; ePos++) {
+        /*if (gidx && backoff &&
+              (ePos-sPos+1 <= backoff || // size exceeds backoff limit (HUH? UG) or ...
+               m_collection[sPos][ePos-sPos].size() > 0)) {
+          VERBOSE(1,"No backoff to graph " << gidx << " for span [" << sPos << ";" << ePos << "]" << endl);
+          continue;*/
+        //n}
         CreateTranslationOptionsForRange(dg, sPos, ePos, true, gidx);
-      //}
+        //}
+      }
     }
+    VERBOSE(1,"Get Translation Options for Stream Decoding done " << endl);
+
   }
   
   ProcessUnknownWord();
