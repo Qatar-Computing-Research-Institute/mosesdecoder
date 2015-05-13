@@ -46,9 +46,14 @@ protected:
   InputPath &GetInputPath(size_t startPos, size_t endPos);
 
 public:
-  void ProcessUnknownWord(size_t sourcePos);
 
   TranslationOptionCollectionText(ttasksptr const& ttask, Sentence const& input, size_t maxNoTransOptPerCoverage, float translationOptionThreshold);
+
+  void Init(Sentence const& input);
+
+  //! For stream decoding, expand the path matrix for newly added input
+  void ExpandInputPathMatrix();
+
 
   bool HasXmlOptionsOverlappingRange(size_t startPosition, size_t endPosition) const;
   bool ViolatesXmlOptionsConstraint(size_t startPosition, size_t endPosition, TranslationOption *transOpt) const;
@@ -56,13 +61,17 @@ public:
 
   void CreateTranslationOptions();
 
+  //* sv: for stream decoding - find translation options for source sequences including new word(s)
   void ExpandTranslationOptions();
+
 
   bool CreateTranslationOptionsForRange(const DecodeGraph &decodeStepList
                                         , size_t startPosition
                                         , size_t endPosition
                                         , bool adhereTableLimit
                                         , size_t graphInd);
+
+  void ProcessUnknownWord(size_t sourcePos);
 
 };
 

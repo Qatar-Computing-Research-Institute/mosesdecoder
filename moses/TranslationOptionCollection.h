@@ -78,6 +78,12 @@ protected:
                               InputType const& src, size_t maxNoTransOptPerCoverage,
                               float translationOptionThreshold);
 
+  //! Initialize the matrix for the translation option lists (m_collection)
+  void Init(InputType const& src);
+
+  //! For stream decoding, expand the path matrix for newly added input
+  void ExpandInputPathMatrix();
+
   void CalcFutureScore();
 
   //! Force a creation of a translation option where there are none for a particular source position.

@@ -66,20 +66,80 @@ TranslationOptionCollection(ttasksptr const& ttask,
   , m_maxNoTransOptPerCoverage(maxNoTransOptPerCoverage)
   , m_translationOptionThreshold(translationOptionThreshold)
 {
+  Init(src);
+}
+
+
+
+void
+TranslationOptionCollection::
+Init(InputType const& src)
+{
+  // sv:  this code moved from constructor into init function
+  VERBOSE(1, "TranslationOptionCollection::Init" << endl);
+
   // create 2-d vector
   size_t size = src.GetSize();
   for (size_t sPos = 0 ; sPos < size ; ++sPos) {
+
     m_collection.push_back( vector< TranslationOptionList >() );
 
     size_t maxSize = size - sPos;
     size_t maxSizePhrase = StaticData::Instance().GetMaxPhraseLength();
     maxSize = std::min(maxSize, maxSizePhrase);
 
-    for (size_t ePos = 0 ; ePos < maxSize ; ++ePos) {
+    // sv ???: why is ePos < sPos allowed?
+    for (size_t ePos = sPos ; ePos < size ; ++ePos) {
+      VERBOSE(1, "init path from " << sPos << " to " << ePos << endl);
       m_collection[sPos].push_back( TranslationOptionList() );
     }
   }
 }
+
+
+void
+TranslationOptionCollection::ExpandInputPathMatrix()
+{
+  VERBOSE(1, "TranslationOptionCollection::ExpandPathMatrix" << endl);
+
+  // current size of input
+  size_t sizeInput = m_source.GetSize();
+
+  // current size of collection
+  // we start behind current last postion, all the way to the new size of m_source
+  size_t sizeCollection = m_collection.size();
+
+  VERBOSE(1, "m_source.size = " << sizeInput << " and sizeCollection = " << sizeCollection << endl);
+
+  for (size_t sPos = 0 ; sPos < sizeInput ; ++sPos) {
+    VERBOSE(1, "m_collection[" << sPos << "].size = " << m_collection[sPos].size() << endl);
+  } 
+
+  
+
+  // are we already large enough - do nothing
+  if ( sizeInput <= sizeCollection ) {
+    return;
+  }
+
+
+  for (size_t sPos = sizeCollection ; sPos < sizeInput ; ++sPos) {
+
+    m_collection.push_back( vector< TranslationOptionList >() );
+
+    size_t maxSize = sizeInput - sPos;
+    size_t maxSizePhrase = StaticData::Instance().GetMaxPhraseLength();
+    maxSize = std::min(maxSize, maxSizePhrase);
+
+    for (size_t ePos = sPos ; ePos < sizeInput ; ++ePos) {
+      VERBOSE(1, "init path from " << sPos << " to " << ePos << endl);
+      m_collection[sPos].push_back( TranslationOptionList() );
+    }
+  } 
+}
+
+
+
 
 /** destructor, clears out data structures */
 TranslationOptionCollection::
@@ -398,6 +458,8 @@ void
 TranslationOptionCollection::
 ExpandTranslationOptions()
 {
+  VERBOSE(1,"TranslationOptionCollection::ExpandTranslationOptions" << endl);
+
   // loop over all substrings of the source sentence, look them up
   // in the phraseDictionary (which is the- possibly filtered-- phrase
   // table loaded on initialization), generate TranslationOption objects
@@ -408,8 +470,6 @@ ExpandTranslationOptions()
   // PG we add an additional position to the collection
   m_collection.push_back( vector< TranslationOptionList >() );
   m_collection[m_collection.size()-1].push_back( TranslationOptionList() );
-
-  VERBOSE(1,"CreateTranslationOptions" << endl);
 
   // loop over all substrings of the source sentence, look them up
   // in the phraseDictionary (which is the- possibly filtered-- phrase
@@ -425,14 +485,14 @@ ExpandTranslationOptions()
   bool StreamDecoding = true;
 
   if ( StreamDecoding ) {
-    VERBOSE(1, "Get Translation Options for Stream Decoding" <<endl);
+    VERBOSE(1, "TranslationOptionCollection::ExpandTranslationOptions Get Translation Options for Stream Decoding" <<endl);
 
     // we only create translation options for spans including the last word
     // ie spans go from 
 
     for (size_t gidx = 0 ; gidx < decodeGraphList.size() ; gidx++) {
       if (decodeGraphList.size() > 1)
-        VERBOSE(1,"Creating translation options from decoding graph " << gidx << endl);
+        VERBOSE(1,"TranslationOptionCollection::ExpandTranslationOptions Creating translation options from decoding graph " << gidx << endl);
 
       const DecodeGraph& dg = *decodeGraphList[gidx];
       size_t backoff = dg.GetBackoff();
@@ -451,17 +511,18 @@ ExpandTranslationOptions()
           VERBOSE(1,"No backoff to graph " << gidx << " for span [" << sPos << ";" << ePos << "]" << endl);
           continue;*/
         //n}
+        VERBOSE(1, "TranslationOptionCollection::ExpandTranslationOptions Create Translation Options for " << sPos << " " << ePos << endl );
         CreateTranslationOptionsForRange(dg, sPos, ePos, true, gidx);
         //}
       }
     }
-    VERBOSE(1,"Get Translation Options for Stream Decoding done " << endl);
+    VERBOSE(1,"TranslationOptionCollection::ExpandTranslationOptions Get Translation Options for Stream Decoding done " << endl);
 
   }
   
   ProcessUnknownWord();
   EvaluateWithSourceContext();
-  VERBOSE(3,"Translation Option Collection\n " << *this << endl);
+  VERBOSE(3,"TranslationOptionCollection::ExpandTranslationOptions Translation Option Collection\n " << *this << endl);
   Prune();
   Sort();
   // sv: !!! the future cost calculation needs to be modified to remove redundant calculation
@@ -480,6 +541,11 @@ CreateTranslationOptionsForRange
 (const DecodeGraph& dgraph, size_t sPos, size_t ePos,
  bool adhereTableLimit, size_t gidx, InputPath &inputPath)
 {
+
+  VERBOSE(1, "TranslationOptionCollection::CreateTranslationOptionsForRange " << sPos << " " << ePos << endl);
+
+  Init(m_source);
+
   typedef DecodeStepTranslation Tstep;
   typedef DecodeStepGeneration Gstep;
   if ((StaticData::Instance().GetXmlInputType() != XmlExclusive)

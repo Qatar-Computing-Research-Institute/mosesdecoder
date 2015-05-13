@@ -6,6 +6,8 @@
 #include "AlignmentInfo.h"
 #include "util/exception.hh"
 #include "TranslationModel/PhraseDictionary.h"
+#include "Util.h"
+
 using namespace std;
 
 namespace Moses
@@ -22,6 +24,8 @@ InputPath(const Phrase &phrase, const NonTerminalSet &sourceNonTerms,
   ,m_sourceNonTerms(sourceNonTerms)
   ,m_sourceNonTermArray(FactorCollection::Instance().GetNumNonTerminals(), false)
 {
+  VERBOSE( 1, "Constructor InputPath::InputPath called" << endl);
+
   for (NonTerminalSet::const_iterator iter = sourceNonTerms.begin(); iter != sourceNonTerms.end(); ++iter) {
     size_t idx = (*iter)[0]->GetId();
     m_sourceNonTermArray[idx] = true;
@@ -33,6 +37,8 @@ InputPath(const Phrase &phrase, const NonTerminalSet &sourceNonTerms,
 
 InputPath::~InputPath()
 {
+  VERBOSE( 1, "Destructor InputPath::~InputPath called" << endl);
+
   // Since there is no way for the Phrase Dictionaries to tell in
   // which (sentence) context phrases were looked up, we tell them
   // now that the phrase isn't needed any more by this inputPath
@@ -46,11 +52,15 @@ InputPath::~InputPath()
 
 const TargetPhraseCollection *InputPath::GetTargetPhrases(const PhraseDictionary &phraseDictionary) const
 {
+  VERBOSE( 1, "InputPath::GetTargetPhrases called for PhraseDictionary with id " << phraseDictionary.GetId() << endl);
+
   std::map<const PhraseDictionary*, std::pair<const TargetPhraseCollection*, const void*> >::const_iterator iter;
   iter = m_targetPhrases.find(&phraseDictionary);
   if (iter == m_targetPhrases.end()) {
+    VERBOSE( 1, "InputPath::GetTargetPhrases - we didn't find any" << endl);
     return NULL;
   }
+  VERBOSE(1, "InputPath::GetTargetPhrases - iter->first" << endl);
   return iter->second.first;
 }
 
@@ -68,6 +78,7 @@ void InputPath::SetTargetPhrases(const PhraseDictionary &phraseDictionary
                                  , const TargetPhraseCollection *targetPhrases
                                  , const void *ptNode)
 {
+
   std::pair<const TargetPhraseCollection*, const void*> value(targetPhrases, ptNode);
   m_targetPhrases[&phraseDictionary] = value;
 }

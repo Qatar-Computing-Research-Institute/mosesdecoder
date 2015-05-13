@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DecodeStepTranslation.h"
 #include "FactorCollection.h"
 #include "WordsRange.h"
+#include "Util.h"
 #include <list>
 
 using namespace std;
@@ -35,6 +36,27 @@ namespace Moses
 TranslationOptionCollectionText::TranslationOptionCollectionText(ttasksptr const& ttask, Sentence const &input, size_t maxNoTransOptPerCoverage, float translationOptionThreshold)
   : TranslationOptionCollection(ttask,input, maxNoTransOptPerCoverage, translationOptionThreshold)
 {
+  Init(input);
+}
+
+
+void
+TranslationOptionCollectionText::ExpandInputPathMatrix()
+{
+  VERBOSE(1, "TranslationOptionCollectionText::ExpandPathMatrix" << endl);
+
+  TranslationOptionCollection::ExpandInputPathMatrix();
+
+}
+
+
+void
+TranslationOptionCollectionText::Init(Sentence const &input)
+{
+  VERBOSE(1, "TranslationOptionCollectionText::Init" << endl);
+
+  // collect all input paths (here this is all word sequences within input sentence)
+  // and strore in m_inputPathMatrix
   size_t size = input.GetSize();
   m_inputPathMatrix.resize(size);
   for (size_t phaseSize = 1; phaseSize <= size; ++phaseSize) {
@@ -152,6 +174,8 @@ void TranslationOptionCollectionText::CreateXmlOptionsForRange(size_t startPos, 
 
 InputPath &TranslationOptionCollectionText::GetInputPath(size_t startPos, size_t endPos)
 {
+  VERBOSE(1, "TranslationOptionCollectionText::GetInputPath " << startPos << " " << endPos << endl);
+
   size_t offset = endPos - startPos;
   assert(offset < m_inputPathMatrix[startPos].size());
   return *m_inputPathMatrix[startPos][offset];
@@ -165,6 +189,9 @@ void TranslationOptionCollectionText::CreateTranslationOptions()
 
 void TranslationOptionCollectionText::ExpandTranslationOptions()
 {
+  // 
+  ExpandInputPathMatrix();
+
   GetTargetPhraseCollectionBatch();
   TranslationOptionCollection::ExpandTranslationOptions();
 }
@@ -184,6 +211,8 @@ CreateTranslationOptionsForRange
 (const DecodeGraph &decodeGraph, size_t startPos, size_t endPos,
  bool adhereTableLimit, size_t graphInd)
 {
+  VERBOSE(1, "TranslationOptionCollectionText::CreateTranslationOptionsForRange for range " << startPos << " " << endPos << endl);
+
   InputPath &inputPath = GetInputPath(startPos, endPos);
 
   return
