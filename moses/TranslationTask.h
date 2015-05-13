@@ -102,9 +102,13 @@ public:
     return m_source;
   }
 
-  boost::shared_ptr<BaseManager>
-  SetupManager(SearchAlgorithm algo = DefaultSearchAlgorithm);
+  boost::shared_ptr<BaseManager> 
+  GetManager();
 
+ void
+  SetupManager(SearchAlgorithm algo = DefaultSearchAlgorithm);
+  
+  void Continue();
 
   boost::shared_ptr<ContextScope> const&
   GetScope() const {
@@ -118,6 +122,7 @@ public:
 protected:
   boost::shared_ptr<Moses::InputType> m_source;
   boost::shared_ptr<Moses::IOWrapper> m_ioWrapper;
+  boost::shared_ptr<BaseManager>  m_manager;
 
 };
 

@@ -394,6 +394,7 @@ CreateTranslationOptions()
   This is for all the source phrases including the last word
 */
 
+void 
 TranslationOptionCollection::
 ExpandTranslationOptions()
 {
@@ -418,12 +419,14 @@ ExpandTranslationOptions()
     size_t backoff = dg.GetBackoff();
     
     // iterate over spans with variable start position but all the way to include the last position
-    ePos = size;
+    size_t ePos = size -1 ;
+    size_t maxSizePhrase = StaticData::Instance().GetMaxPhraseLength();
+    size_t startPosition = std::max(size_t(0),size-maxSizePhrase);
 
-    for (size_t sPos = 0 ; sPos < size; sPos++) {
-      size_t maxSize = size - sPos; // don't go over end of sentence
-      size_t maxSizePhrase = StaticData::Instance().GetMaxPhraseLength();
-      maxSize = std::min(maxSize, maxSizePhrase);
+    for (size_t sPos = startPosition ; sPos < size; sPos++) {
+      //size_t maxSize = size - sPos; // don't go over end of sentence
+      
+      //maxSize = std::min(maxSize, maxSizePhrase);
 
       //for (size_t ePos = sPos ; ePos < sPos + maxSize ; ePos++) {
 
@@ -448,6 +451,7 @@ ExpandTranslationOptions()
 
   // sv: !!! needs also to be investigated
   CacheLexReordering(); // Cached lex reodering costs
+
 }
 
 

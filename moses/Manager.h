@@ -157,6 +157,7 @@ public:
   const  TranslationOptionCollection* getSntTranslationOptions();
 
   void Decode();
+  void ContinueDecode();
   const Hypothesis *GetBestHypothesis() const;
   const Hypothesis *GetActualBestHypothesis() const;
   void CalcNBest(size_t count, TrellisPathList &ret,bool onlyDistinct=0) const;
