@@ -330,6 +330,9 @@ run_as_stream()
   task->SetContextString(context_string);
   boost::shared_ptr<BaseManager> manager;
 
+
+  VERBOSE(1, "INPUT: ");
+
   while ((source_sentence = ioWrapper->ReadInput()) != NULL) {
 
 
@@ -365,17 +368,15 @@ run_as_stream()
   /*#ifdef WITH_THREADS
       pool.Submit(task);
   #else*/
-      if(!manager)
-        {
-          std::cerr << "run "<<sPos <<endl;
-          manager=task->RunWithManager();
-        }
-      else
-        {
-          std::cerr << "continue "<<sPos <<endl;
-          std::cerr << manager << endl;
-          task->Continue(manager);
-        }
+      if(!manager) {
+        std::cerr << "run "<<sPos <<endl;
+        manager=task->RunWithManager();
+      } else {
+        std::cerr << "continue "<<sPos <<endl;
+        std::cerr << manager << endl;
+        task->Continue(manager);        }
+
+      VERBOSE(1, "INPUT: ");
 
     }
     std::cerr << "finishing "  <<endl;
