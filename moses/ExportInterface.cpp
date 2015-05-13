@@ -324,11 +324,6 @@ run_as_stream()
   
   source.reset(new Sentence );
 
-  boost::shared_ptr<TranslationTask>
-  task = TranslationTask::create(source, ioWrapper);
-      
-  task->SetContextString(context_string);
-  boost::shared_ptr<BaseManager> manager;
 
 
   VERBOSE(1, "INPUT: ");
@@ -341,6 +336,12 @@ run_as_stream()
      boost::shared_ptr<Sentence> source_sent =  boost::static_pointer_cast<Sentence>(source_sentence);
 
     size_t size = source_sent->GetSize();
+    
+    boost::shared_ptr<TranslationTask>
+    task = TranslationTask::create(source, ioWrapper);
+        
+    task->SetContextString(context_string);
+    boost::shared_ptr<BaseManager> manager;
    
       
     for (size_t sPos = 0 ; sPos < size ; ++sPos) {
