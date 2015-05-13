@@ -320,8 +320,14 @@ run_as_stream()
 
   boost::shared_ptr<InputType> source_sentence;
   boost::shared_ptr<Sentence> source;
-
+  
   source.reset(new Sentence );
+
+  boost::shared_ptr<TranslationTask>
+  task = TranslationTask::create(source, ioWrapper);
+      
+  task->SetContextString(context_string);
+  boost::shared_ptr<BaseManager> manager;
 
   while ((source_sentence = ioWrapper->ReadInput()) != NULL) {
 
@@ -331,17 +337,15 @@ run_as_stream()
      boost::shared_ptr<Sentence> source_sent =  boost::static_pointer_cast<Sentence>(source_sentence);
 
     size_t size = source_sent->GetSize();
-    boost::shared_ptr<TranslationTask>
-    task = TranslationTask::create(source, ioWrapper);
-    task->SetContextString(context_string);
-
-
-    for (size_t sPos = 0 ; sPos < size ; ++sPos) {
+   
       
+    for (size_t sPos = 0 ; sPos < size ; ++sPos) {
+
+
       std::cerr << "looping "<<sPos <<endl;
       const Word & source_word = source_sent->GetWord(sPos);
       source->AddWord(source_word);
-      source->reinit();
+      //source->reinit();
       //source = source_sentence;
 
       FeatureFunction::CallChangeSource(source.get());
@@ -360,18 +364,20 @@ run_as_stream()
   /*#ifdef WITH_THREADS
       pool.Submit(task);
   #else*/
-      if(sPos == 0)
+      if(!manager)
         {
           std::cerr << "run "<<sPos <<endl;
-          task->Run();
+          manager=task->RunWithManager();
         }
       else
         {
           std::cerr << "continue "<<sPos <<endl;
-          task->Continue();
+          std::cerr << manager << endl;
+          task->Continue(manager);
         }
 
     }
+    std::cerr << "finishing "  <<endl;
     //source.reset(new Sentence);
 /*#endif
 */ 

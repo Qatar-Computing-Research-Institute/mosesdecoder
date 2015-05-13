@@ -96,19 +96,21 @@ public:
   /** Translate one sentence
    * gets called by main function implemented at end of this source file */
   virtual void Run();
+boost::shared_ptr<BaseManager>
+  RunWithManager();
 
   boost::shared_ptr<Moses::InputType>
   GetSource() const {
     return m_source;
   }
 
-  boost::shared_ptr<BaseManager> 
-  GetManager();
+  void 
+  SetManager(boost::shared_ptr<Moses::BaseManager> const& manager);
 
- void
+  boost::shared_ptr<BaseManager>
   SetupManager(SearchAlgorithm algo = DefaultSearchAlgorithm);
   
-  void Continue();
+  void Continue(boost::shared_ptr<Moses::BaseManager> const &manager);
 
   boost::shared_ptr<ContextScope> const&
   GetScope() const {
@@ -122,7 +124,6 @@ public:
 protected:
   boost::shared_ptr<Moses::InputType> m_source;
   boost::shared_ptr<Moses::IOWrapper> m_ioWrapper;
-  boost::shared_ptr<BaseManager>  m_manager;
 
 };
 

@@ -80,6 +80,7 @@ Manager::Manager(ttasksptr const& ttask)
 
 Manager::~Manager()
 {
+  std::cerr<< "Removing Maanager"<< endl;
   delete m_transOptColl;
   delete m_search;
   StaticData::Instance().CleanUpAfterSentenceProcessing(m_ttask.lock());
@@ -164,6 +165,8 @@ void Manager::ContinueDecode()
   IFVERBOSE(1) {
     GetSentenceStats().StartTimeCollectOpts();
   }
+
+  TRACE_ERR(" Here I got after al");
 
   // sv: for now we are interested in the stream decoding only
   //m_transOptColl->CreateTranslationOptions();

@@ -65,75 +65,89 @@ TranslationTask
 ::TranslationTask(boost::shared_ptr<InputType> const& source,
                   boost::shared_ptr<IOWrapper> const& ioWrapper)
   : m_source(source) , m_ioWrapper(ioWrapper)
-{ }
+{ 
+
+}
+
 
 TranslationTask::~TranslationTask()
-{ }
+{ 
 
-boost::shared_ptr<BaseManager> 
-  TranslationTask
-  ::GetManager(){
-    return m_manager;
+}
+
+  void 
+  TranslationTask::
+  SetManager(boost::shared_ptr<Moses::BaseManager> const& manager)
+  {
+    //m_manager=boost::static_pointer_cast(manager);
+
   }
 
-void
+boost::shared_ptr<BaseManager>
 TranslationTask
 ::SetupManager(SearchAlgorithm algo)
 {
-  boost::shared_ptr<BaseManager> manager;
+  boost::shared_ptr<BaseManager>  manager;
+  BaseManager * p_manager;
   StaticData const& staticData = StaticData::Instance();
   if (algo == DefaultSearchAlgorithm) algo = staticData.GetSearchAlgorithm();
 
   if (!staticData.IsSyntax(algo))
-    manager.reset(new Manager(this->self())); // phrase-based
+    p_manager = new Manager(this->self()); // phrase-based
 
-  else if (algo == SyntaxF2S || algo == SyntaxT2S) {
-    // STSG-based tree-to-string / forest-to-string decoding (ask Phil Williams)
-    typedef Syntax::F2S::RuleMatcherCallback Callback;
-    typedef Syntax::F2S::RuleMatcherHyperTree<Callback> RuleMatcher;
-    manager.reset(new Syntax::F2S::Manager<RuleMatcher>(this->self()));
-  }
+  else if (algo == SyntaxF2S || algo == SyntaxT2S)
+    { // STSG-based tree-to-string / forest-to-string decoding (ask Phil Williams)
+      typedef Syntax::F2S::RuleMatcherCallback Callback;
+      typedef Syntax::F2S::RuleMatcherHyperTree<Callback> RuleMatcher;
+      p_manager = new Syntax::F2S::Manager<RuleMatcher>(this->self());
+    }
 
-  else if (algo == SyntaxS2T) {
-    // new-style string-to-tree decoding (ask Phil Williams)
-    S2TParsingAlgorithm algorithm = staticData.GetS2TParsingAlgorithm();
-    if (algorithm == RecursiveCYKPlus) {
-      typedef Syntax::S2T::EagerParserCallback Callback;
-      typedef Syntax::S2T::RecursiveCYKPlusParser<Callback> Parser;
-      manager.reset(new Syntax::S2T::Manager<Parser>(this->self()));
-    } else if (algorithm == Scope3) {
-      typedef Syntax::S2T::StandardParserCallback Callback;
-      typedef Syntax::S2T::Scope3Parser<Callback> Parser;
-      manager.reset(new Syntax::S2T::Manager<Parser>(this->self()));
-    } else UTIL_THROW2("ERROR: unhandled S2T parsing algorithm");
-  }
+  else if (algo == SyntaxS2T)
+    { // new-style string-to-tree decoding (ask Phil Williams)
+      S2TParsingAlgorithm algorithm = staticData.GetS2TParsingAlgorithm();
+      if (algorithm == RecursiveCYKPlus)
+	{
+	  typedef Syntax::S2T::EagerParserCallback Callback;
+	  typedef Syntax::S2T::RecursiveCYKPlusParser<Callback> Parser;
+	  p_manager = new Syntax::S2T::Manager<Parser>(this->self());
+	}
+      else if (algorithm == Scope3)
+	{
+	  typedef Syntax::S2T::StandardParserCallback Callback;
+	  typedef Syntax::S2T::Scope3Parser<Callback> Parser;
+	  p_manager = new Syntax::S2T::Manager<Parser>(this->self());
+	}
+      else UTIL_THROW2("ERROR: unhandled S2T parsing algorithm");
+    }
 
-  else if (algo == SyntaxT2S_SCFG) {
-    // SCFG-based tree-to-string decoding (ask Phil Williams)
-    typedef Syntax::F2S::RuleMatcherCallback Callback;
-    typedef Syntax::T2S::RuleMatcherSCFG<Callback> RuleMatcher;
-    manager.reset(new Syntax::T2S::Manager<RuleMatcher>(this->self()));
-  }
+  else if (algo == SyntaxT2S_SCFG)
+    { // SCFG-based tree-to-string decoding (ask Phil Williams)
+      typedef Syntax::F2S::RuleMatcherCallback Callback;
+      typedef Syntax::T2S::RuleMatcherSCFG<Callback> RuleMatcher;
+      p_manager =new Syntax::T2S::Manager<RuleMatcher>(this->self());
+    }
 
   else if (algo == ChartIncremental) // Ken's incremental decoding
-    manager.reset(new Incremental::Manager(this->self()));
+    p_manager =new Incremental::Manager(this->self());
 
   else // original SCFG manager
-    manager.reset(new ChartManager(this->self()));
+    p_manager = new ChartManager(this->self());
 
-  m_manager = manager;
-  return;
+  manager.reset(p_manager);
+  return manager;
 }
 
 void TranslationTask
-::Continue()
+::Continue(boost::shared_ptr<BaseManager> const & p_manager)
 {
   // shorthand for "global data"
   const size_t translationId = m_source->GetTranslationId();
   Timer translationTime;
   translationTime.start();
-  
-  boost::shared_ptr<Manager>manager =  boost::static_pointer_cast<Manager>(m_manager);
+
+  std::cerr<<"Got to here 1"<<endl;
+  boost::shared_ptr<Manager> const & manager=boost::static_pointer_cast<Manager>(p_manager);
+  std::cerr<<"Got to here 2"<<endl;
   manager->ContinueDecode();
 
     // new: stop here if m_ioWrapper is NULL. This means that the
@@ -141,6 +155,7 @@ void TranslationTask
     // oh, and by the way, all the output should be handled by the
     // output wrapper along the lines of *m_iwWrapper << *manager;
     // Just sayin' ...
+    std::cerr<<"Got to here 3"<<endl;
     if (m_ioWrapper == NULL) return;
     // we are done with search, let's look what we got
     OutputCollector* ocoll;
@@ -196,12 +211,17 @@ void TranslationTask
     }
 
 }
-
 void TranslationTask::Run()
 {
+  boost::shared_ptr<BaseManager> dummy= RunWithManager();
+}
+
+boost::shared_ptr<BaseManager>
+TranslationTask::RunWithManager()
+{
   UTIL_THROW_IF2(!m_source || !m_ioWrapper,
-                 "Base Instances of TranslationTask must be initialized with"
-                 << " input and iowrapper.");
+		 "Base Instances of TranslationTask must be initialized with"
+		 << " input and iowrapper.");
 
 
   // shorthand for "global data"
@@ -223,11 +243,11 @@ void TranslationTask::Run()
   Timer initTime;
   initTime.start();
 
-  SetupManager();
-  boost::shared_ptr<BaseManager> manager = m_manager;
+ 
+  boost::shared_ptr<BaseManager> manager=SetupManager();
 
   VERBOSE(1, "Line " << translationId << ": Initialize search took "
-          << initTime << " seconds total" << endl);
+	  << initTime << " seconds total" << endl);
 
   manager->Decode();
 
@@ -236,7 +256,7 @@ void TranslationTask::Run()
   // oh, and by the way, all the output should be handled by the
   // output wrapper along the lines of *m_iwWrapper << *manager;
   // Just sayin' ...
-  if (m_ioWrapper == NULL) return;
+  if (m_ioWrapper == NULL) return manager;
   // we are done with search, let's look what we got
   OutputCollector* ocoll;
   Timer additionalReportingTime;
@@ -283,12 +303,13 @@ void TranslationTask::Run()
   // report additional statistics
   manager->CalcDecoderStatistics();
   VERBOSE(1, "Line " << translationId << ": Additional reporting took "
-          << additionalReportingTime << " seconds total" << endl);
+	  << additionalReportingTime << " seconds total" << endl);
   VERBOSE(1, "Line " << translationId << ": Translation took "
-          << translationTime << " seconds total" << endl);
+	  << translationTime << " seconds total" << endl);
   IFVERBOSE(2) {
     PrintUserTime("Sentence Decoding Time:");
   }
+  return boost::shared_ptr<BaseManager>(manager);
 }
 
 }
