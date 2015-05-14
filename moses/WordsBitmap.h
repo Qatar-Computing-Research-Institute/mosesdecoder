@@ -28,8 +28,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
+#include <iostream>
+#include <stdio.h>
+
 #include "TypeDef.h"
 #include "WordsRange.h"
+
+using namespace std;
+
 
 namespace Moses
 {
@@ -40,6 +46,7 @@ typedef unsigned long WordsBitmapID;
 class WordsBitmap
 {
   friend std::ostream& operator<<(std::ostream& out, const WordsBitmap& wordsBitmap);
+
 protected:
   size_t m_size; /**< number of words in sentence */
   bool	*m_bitmap;	/**< ticks of words that have been done */
@@ -52,6 +59,7 @@ protected:
       m_bitmap[pos] = false;
     }
   }
+
 
   //sets elements by vector
   void Initialize(std::vector<bool> vector) {
@@ -70,12 +78,16 @@ public:
     m_bitmap = (bool*) malloc(sizeof(bool) * size);
     Initialize(initialize_vector);
   }
+
+
   //! create WordsBitmap of length size and initialise
   WordsBitmap(size_t size)
     :m_size	(size) {
     m_bitmap = (bool*) malloc(sizeof(bool) * size);
     Initialize();
   }
+
+
   //! deep copy
   WordsBitmap(const WordsBitmap &copy)
     :m_size	(copy.m_size) {
@@ -89,6 +101,8 @@ public:
   ~WordsBitmap() {
     free(m_bitmap);
   }
+
+
   //! count of words translated
   size_t GetNumWordsCovered() const {
     size_t count = 0;
@@ -98,6 +112,7 @@ public:
     }
     return count;
   }
+
 
   //! position of 1st word not yet translated, or NOT_FOUND if everything already translated
   size_t GetFirstGapPos() const {
@@ -134,32 +149,47 @@ public:
     return NOT_FOUND;
   }
 
+
   bool IsAdjacent(size_t startPos, size_t endPos) const;
+
 
   //! whether a word has been translated at a particular position
   bool GetValue(size_t pos) const {
     return m_bitmap[pos];
   }
+
+
   //! set value at a particular position
   void SetValue( size_t pos, bool value ) {
-    m_bitmap[pos] = value;
+    if (pos < m_size) {
+      m_bitmap[pos] = value;
+    }
   }
+
+
   //! set value between 2 positions, inclusive
   void
   SetValue( size_t startPos, size_t endPos, bool value ) {
-    for(size_t pos = startPos ; pos <= endPos ; pos++)
-      m_bitmap[pos] = value;
+    for(size_t pos = startPos ; pos <= endPos ; pos++) {
+      if (pos < m_size) {
+        m_bitmap[pos] = value;
+      }
+    }
   }
+
 
   void
   SetValue(WordsRange const& range, bool val) {
     SetValue(range.GetStartPos(), range.GetEndPos(), val);
   }
 
+
   //! whether every word has been translated
   bool IsComplete() const {
     return GetSize() == GetNumWordsCovered();
   }
+
+
   //! whether the wordrange overlaps with any translated word in this bitmap
   bool Overlap(const WordsRange &compare) const {
     for (size_t pos = compare.GetStartPos() ; pos <= compare.GetEndPos() ; pos++) {
@@ -172,6 +202,7 @@ public:
   size_t GetSize() const {
     return m_size;
   }
+
 
   //! add additional positions
   void Expand(size_t additional)
@@ -187,6 +218,23 @@ public:
     m_bitmap = newvector;       
 
   }
+
+
+  //! shrink bitvector by removing all positions between spos and epos
+  //! this is used in stream decoding, when a partial translation is committed
+  //! meaning that some input words are removed from the input stream
+  inline void RemoveSpan( size_t spos, size_t epos)
+  {
+    size_t delta = epos - spos + 1;
+    for (size_t pos = spos; pos < m_size - delta; pos++ ) {
+      m_bitmap[pos] = m_bitmap[pos + delta];
+    }
+    for (size_t pos = m_size - delta; pos < m_size; pos++) {
+      m_bitmap[pos] = false;
+    }
+  }
+
+
   //! transitive comparison of WordsBitmap
   inline int Compare (const WordsBitmap &compare) const {
     // -1 = less than
@@ -202,9 +250,11 @@ public:
     return std::memcmp(m_bitmap, compare.m_bitmap, thisSize * sizeof(bool));
   }
 
+
   bool operator< (const WordsBitmap &compare) const {
     return Compare(compare) < 0;
   }
+
 
   inline size_t GetEdgeToTheLeftOf(size_t l) const {
     if (l == 0) return l;
@@ -213,6 +263,7 @@ public:
     }
     return l;
   }
+
 
   inline size_t GetEdgeToTheRightOf(size_t r) const {
     if (r+1 == m_size) return r;
@@ -223,8 +274,9 @@ public:
   }
 
 
-  //! TODO - ??? no idea
+  //! This calculates future cost for a distance based distortion model
   int GetFutureCosts(int lastPos) const ;
+
 
   //! converts bitmap into an integer ID: it consists of two parts: the first 16 bit are the pattern between the first gap and the last word-1, the second 16 bit are the number of filled positions. enforces a sentence length limit of 65535 and a max distortion of 16
   WordsBitmapID GetID() const {
@@ -243,6 +295,7 @@ public:
     }
     return id + (1<<16) * start;
   }
+
 
   //! converts bitmap into an integer ID, with an additional span covered
   WordsBitmapID GetIDPlus( size_t startPos, size_t endPos ) const {
@@ -268,7 +321,9 @@ public:
   }
 
   TO_STRING();
-};
+
+}; // end of class WordsBitmap
+
 
 // friend
 inline std::ostream& operator<<(std::ostream& out, const WordsBitmap& wordsBitmap)
@@ -279,5 +334,5 @@ inline std::ostream& operator<<(std::ostream& out, const WordsBitmap& wordsBitma
   return out;
 }
 
-}
+} // end of namespace Moses
 #endif
