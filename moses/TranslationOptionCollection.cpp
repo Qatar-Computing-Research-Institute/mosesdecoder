@@ -94,6 +94,7 @@ Init(InputType const& src)
       m_collection[sPos].push_back( TranslationOptionList() );
     }
   }
+  VERBOSE(1,"Now size is " << m_collection.size() <<endl);
 }
 
 
@@ -111,10 +112,10 @@ TranslationOptionCollection::ExpandInputPathMatrix()
 
   VERBOSE(1, "m_source.size = " << sizeInput << " and sizeCollection = " << sizeCollection << endl);
 
-  for (size_t sPos = 0 ; sPos < sizeInput ; ++sPos) {
+  for (size_t sPos = 0 ; sPos < sizeCollection ; ++sPos) {
     VERBOSE(1, "m_collection[" << sPos << "].size = " << m_collection[sPos].size() << endl);
-  } 
-
+  }
+  VERBOSE(1,"-----------"<<endl);
   
 
   // are we already large enough - do nothing
@@ -123,19 +124,43 @@ TranslationOptionCollection::ExpandInputPathMatrix()
   }
 
 
+  // PG we add an additional position to the collection
+ // m_collection.push_back( vector< TranslationOptionList >() );
+  //m_collection[m_collection.size()-1].push_back( TranslationOptionList() );
+
+
   for (size_t sPos = sizeCollection ; sPos < sizeInput ; ++sPos) {
 
     m_collection.push_back( vector< TranslationOptionList >() );
+    m_collection[m_collection.size()-1].push_back( TranslationOptionList() );
+  
+  }
 
-    size_t maxSize = sizeInput - sPos;
-    size_t maxSizePhrase = StaticData::Instance().GetMaxPhraseLength();
-    maxSize = std::min(maxSize, maxSizePhrase);
+  for (size_t sPos = 0 ; sPos < m_collection.size() ; ++sPos) {
+    VERBOSE(1, "m_collection[" << sPos << "].size = " << m_collection[sPos].size() << endl);
+  } 
+  VERBOSE(1,"-----------"<<endl);
 
-    for (size_t ePos = sPos ; ePos < sizeInput ; ++ePos) {
-      VERBOSE(1, "init path from " << sPos << " to " << ePos << endl);
-      m_collection[sPos].push_back( TranslationOptionList() );
+  size_t maxSpan = sizeInput - sizeCollection;
+  size_t maxSizePhrase = StaticData::Instance().GetMaxPhraseLength();
+  //size_t maxSize = std::min(sizeCollection, maxSizePhrase);
+  //size_t startPos = std::max((size_t)0,sizeInput-maxSize);
+
+  for (size_t sPos = 0 ; sPos < maxSpan ; ++sPos  )
+  {
+    size_t maxSize = std::min(sizeCollection+sPos, maxSizePhrase);
+
+    for (size_t ePos = 0 ; ePos < maxSize ; ++ePos) {
+
+      VERBOSE(1, "init path from " << sizeCollection+sPos-ePos-1 << " to " << sizeCollection+sPos << endl);
+      m_collection[sizeCollection+sPos-ePos-1].push_back( TranslationOptionList() );
     }
   } 
+
+  for (size_t sPos = 0 ; sPos < m_collection.size() ; ++sPos) {
+    VERBOSE(1, "m_collection[" << sPos << "].size = " << m_collection[sPos].size() << endl);
+  } 
+    VERBOSE(1,"-----------"<<endl);
 }
 
 
@@ -238,6 +263,7 @@ TranslationOptionCollection::
 ProcessOneUnknownWord(const InputPath &inputPath, size_t sourcePos,
                       size_t length, const ScorePair *inputScores)
 {
+  VERBOSE(1, "AT TranslationOptionCollection::ProcessOneUnknownWord");
   const StaticData &staticData = StaticData::Instance();
   const UnknownWordPenaltyProducer&
   unknownWordPenaltyProducer = UnknownWordPenaltyProducer::Instance();
@@ -466,11 +492,6 @@ ExpandTranslationOptions()
   // for all phrases
 
   // there may be multiple decoding graphs (factorizations of decoding)
-  
-  // PG we add an additional position to the collection
-  m_collection.push_back( vector< TranslationOptionList >() );
-  m_collection[m_collection.size()-1].push_back( TranslationOptionList() );
-
   // loop over all substrings of the source sentence, look them up
   // in the phraseDictionary (which is the- possibly filtered-- phrase
   // table loaded on initialization), generate TranslationOption objects
@@ -544,7 +565,7 @@ CreateTranslationOptionsForRange
 
   VERBOSE(1, "TranslationOptionCollection::CreateTranslationOptionsForRange " << sPos << " " << ePos << endl);
 
-  Init(m_source);
+  //Init(m_source);
 
   typedef DecodeStepTranslation Tstep;
   typedef DecodeStepGeneration Gstep;

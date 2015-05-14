@@ -31,9 +31,11 @@ public:
 
   //! Decode the sentence according to the specified search algorithm.
   virtual void Decode() = 0;
+  virtual void ResumeDecode(){ Decode();}
 
   explicit Search(Manager& manager);
   virtual ~Search() {}
+  virtual void AddNewStack(){};
 
   // Factory method
   static Search *CreateSearch(Manager& manager, const InputType &source, SearchAlgorithm searchAlgorithm,

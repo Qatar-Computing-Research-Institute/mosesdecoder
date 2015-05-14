@@ -41,7 +41,7 @@ class WordsBitmap
 {
   friend std::ostream& operator<<(std::ostream& out, const WordsBitmap& wordsBitmap);
 protected:
-  const size_t m_size; /**< number of words in sentence */
+  size_t m_size; /**< number of words in sentence */
   bool	*m_bitmap;	/**< ticks of words that have been done */
 
   WordsBitmap(); // not implemented
@@ -84,6 +84,8 @@ public:
       m_bitmap[pos] = copy.GetValue(pos);
     }
   }
+
+
   ~WordsBitmap() {
     free(m_bitmap);
   }
@@ -171,6 +173,20 @@ public:
     return m_size;
   }
 
+  //! add additional positions
+  void Expand(size_t additional)
+  {
+    bool* newvector = (bool*) malloc(sizeof(bool) * (additional + m_size));
+    for(size_t pos = 0 ; pos < m_size ; pos++)
+      newvector[pos] = m_bitmap[pos];
+    for(size_t pos = 0; pos<additional;pos++)
+      newvector[m_size+pos] = false;
+    
+    m_size+=additional;
+    free(m_bitmap);
+    m_bitmap = newvector;       
+
+  }
   //! transitive comparison of WordsBitmap
   inline int Compare (const WordsBitmap &compare) const {
     // -1 = less than

@@ -26,6 +26,9 @@ public:
   HypothesisStack(Manager& manager): m_manager(manager) {}
   typedef _HCType::iterator iterator;
   typedef _HCType::const_iterator const_iterator;
+
+  virtual void RemoveAll();
+
   //! iterators
   const_iterator begin() const {
     return m_hypos.begin();

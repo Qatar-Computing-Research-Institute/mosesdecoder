@@ -50,6 +50,8 @@ public:
   TranslationOptionCollectionText(ttasksptr const& ttask, Sentence const& input, size_t maxNoTransOptPerCoverage, float translationOptionThreshold);
 
   void Init(Sentence const& input);
+  // PG: For stream decoding
+  void ReInit();
 
   //! For stream decoding, expand the path matrix for newly added input
   void ExpandInputPathMatrix();

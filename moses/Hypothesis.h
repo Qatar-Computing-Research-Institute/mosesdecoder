@@ -115,10 +115,13 @@ public:
   /** return the subclass of Hypothesis most appropriate to the given target phrase */
   static Hypothesis* Create(Manager& manager, InputType const& source, const TranslationOption &initialTransOpt);
 
+
   /** return the subclass of Hypothesis most appropriate to the given translation option */
   Hypothesis* CreateNext(const TranslationOption &transOpt) const;
 
   void PrintHypothesis() const;
+
+  void UpdateHypothesisCoverage();
 
   const InputType& GetInput() const {
     return m_sourceInput;

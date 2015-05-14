@@ -151,7 +151,10 @@ GetTargetPhraseCollectionBatch(const InputPathList &inputPathQueue) const
     const PhraseDictionaryNodeMemory *prevPtNode = NULL;
 
     if (prevPath) {
+      VERBOSE(1, "Getting new prev Path for "<< phrase );
+      VERBOSE(1, "--<<--- from:  "<< inputPath.GetPrevPath()->GetPhrase() << endl);
       prevPtNode = static_cast<const PhraseDictionaryNodeMemory*>(prevPath->GetPtNode(*this));
+
     } else {
       // Starting subphrase.
       assert(phrase.GetSize() == 1);

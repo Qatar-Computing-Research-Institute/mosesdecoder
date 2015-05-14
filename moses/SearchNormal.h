@@ -37,6 +37,8 @@ public:
   ~SearchNormal();
 
   void Decode();
+  void ResumeDecode();
+  void AddNewStack();
 
   void OutputHypoStackSize();
   void OutputHypoStack();

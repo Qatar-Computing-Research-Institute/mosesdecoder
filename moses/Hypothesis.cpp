@@ -331,6 +331,7 @@ PrintHypothesis() const
   }
   TRACE_ERR( ")"<<endl);
   TRACE_ERR( "\tbase score "<< (m_prevHypo->m_totalScore - m_prevHypo->m_futureScore) <<endl);
+  TRACE_ERR("\t coverage " << m_sourceCompleted <<endl);
   TRACE_ERR( "\tcovering "<<m_currSourceWordsRange.GetStartPos()<<"-"<<m_currSourceWordsRange.GetEndPos()
              <<": " << m_transOpt.GetInputPath().GetPhrase() << endl);
 
@@ -673,8 +674,21 @@ OutputWordAlignment(vector<xmlrpc_c::value>& out) const
     tmp[i]->OutputLocalWordAlignment(out);
 }
 
+
+
 #endif
 
+void
+Hypothesis::UpdateHypothesisCoverage()
+{
+  size_t curr_length = m_sourceInput.GetSize();
+  size_t prev_length = m_sourceCompleted.GetSize();
 
+  if(curr_length>prev_length){
+    VERBOSE(1, " Updating coverage vector from"<< prev_length<< " to "<<curr_length << endl);
+    m_sourceCompleted.Expand(curr_length-prev_length);
+  }
+
+}
 }
 

@@ -145,6 +145,7 @@ void Manager::Decode()
 
 void Manager::ContinueDecode()
 {
+  m_sentenceStats->Expand(m_source);
   // initialize statistics
   /*ResetSentenceStats(m_source);
   IFVERBOSE(2) {
@@ -171,6 +172,7 @@ void Manager::ContinueDecode()
   // sv: for now we are interested in the stream decoding only
   //m_transOptColl->CreateTranslationOptions();
   m_transOptColl->ExpandTranslationOptions();
+  m_search->AddNewStack();
 
   // some reporting on how long this took
   IFVERBOSE(1) {
@@ -183,7 +185,7 @@ void Manager::ContinueDecode()
   // search for best translation with the specified algorithm
   Timer searchTime;
   searchTime.start();
-  m_search->Decode();
+  m_search->ResumeDecode();
   VERBOSE(1, "Line " << m_source.GetTranslationId()
           << ": Search took " << searchTime << " seconds" << endl);
   IFVERBOSE(2) {

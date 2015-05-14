@@ -45,6 +45,7 @@ TranslationOptionCollectionText::ExpandInputPathMatrix()
 {
   VERBOSE(1, "TranslationOptionCollectionText::ExpandPathMatrix" << endl);
 
+  ReInit();
   TranslationOptionCollection::ExpandInputPathMatrix();
 
 }
@@ -82,6 +83,52 @@ TranslationOptionCollectionText::Init(Sentence const &input)
     }
   }
 }
+
+void
+TranslationOptionCollectionText::ReInit()
+{
+  VERBOSE(1, "TranslationOptionCollectionText::ReInit" << endl);
+
+  // collect all input paths (here this is all word sequences within input sentence)
+  // and strore in m_inputPathMatrix
+  size_t size = m_source.GetSize();
+  size_t oldsize = m_inputPathMatrix.size();
+  m_inputPathMatrix.resize(size);
+
+  for (size_t phaseSize = 1; phaseSize <= size; ++phaseSize) {
+    for (size_t startPos = 0; startPos < size - phaseSize + 1; ++startPos) {
+      
+      size_t endPos = startPos + phaseSize -1;
+
+      if (endPos<oldsize) continue;
+
+      vector<InputPath*> &vec = m_inputPathMatrix[startPos];
+
+      WordsRange range(startPos, endPos);
+      Phrase subphrase(m_source.GetSubString(WordsRange(startPos, endPos)));
+      const NonTerminalSet &labels = m_source.GetLabelSet(startPos, endPos);
+
+      InputPath *path;
+      if (range.GetNumWordsCovered() == 1) {
+        path = new InputPath(subphrase, labels, range, NULL, NULL);
+        vec.push_back(path);
+      } else {
+        const InputPath &prevPath = GetInputPath(startPos, endPos - 1);
+        path = new InputPath(subphrase, labels, range, &prevPath, NULL);
+        vec.push_back(path);
+      }
+
+      m_inputPathQueue.push_back(path);
+    }
+  }
+
+  for (size_t startPos = 0; startPos < size; ++startPos)
+  {
+      VERBOSE(1, "***** m_inputPathMatrix[" << startPos << "] size is now " << m_inputPathMatrix[startPos].size()<< endl);
+  }
+  
+}
+
 
 /* forcibly create translation option for a particular source word.
 	* For text, this function is easy, just call the base class' ProcessOneUnknownWord()
@@ -191,7 +238,6 @@ void TranslationOptionCollectionText::ExpandTranslationOptions()
 {
   // 
   ExpandInputPathMatrix();
-
   GetTargetPhraseCollectionBatch();
   TranslationOptionCollection::ExpandTranslationOptions();
 }

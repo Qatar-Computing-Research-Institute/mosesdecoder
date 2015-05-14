@@ -71,7 +71,9 @@ public:
     m_deletedWords.clear();
     m_insertedWords.clear();
   }
-
+  void Expand(const InputType& source) 
+  {  m_totalSourceWords = source.GetSize(); 
+  }
   /***
    * to be called after decoding a sentence
    */

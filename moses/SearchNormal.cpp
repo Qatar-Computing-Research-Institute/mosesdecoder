@@ -49,6 +49,18 @@ SearchNormal::~SearchNormal()
  * Main decoder loop that translates a sentence by expanding
  * hypotheses stack by stack, until the end of the sentence.
  */
+
+void SearchNormal::AddNewStack()
+{
+  const StaticData &staticData = StaticData::Instance();
+  VERBOSE(1, "Adding new Stack: "  << endl);
+  HypothesisStackNormal *sourceHypoColl = new HypothesisStackNormal(m_manager);
+  sourceHypoColl->SetMaxHypoStackSize(staticData.GetMaxHypoStackSize(),
+                                          staticData.GetMinHypoStackDiversity());
+  sourceHypoColl->SetBeamWidth(staticData.GetBeamWidth());
+  m_hypoStackColl.push_back(sourceHypoColl);
+  
+}
 void SearchNormal::Decode()
 {
   const StaticData &staticData = StaticData::Instance();
@@ -99,7 +111,78 @@ void SearchNormal::Decode()
   }
   //OutputHypoStack();
 }
+/** 
+ */
 
+void SearchNormal::ResumeDecode()
+{
+  const StaticData &staticData = StaticData::Instance();
+  SentenceStats &stats = m_manager.GetSentenceStats();
+
+  if (true)
+  {
+
+    //Delete all hypotheses
+    std::vector < HypothesisStack* >::iterator iterStack;
+    for (iterStack = m_hypoStackColl.begin() ; iterStack != m_hypoStackColl.end() ; ++iterStack) {
+
+      HypothesisStackNormal &sourceHypoColl = *static_cast<HypothesisStackNormal*>(*iterStack);
+      sourceHypoColl.RemoveAll();
+    }
+    // Start allover again
+    Decode();
+
+    return;
+
+  }
+
+  // go through each stack
+  std::vector < HypothesisStack* >::iterator iterStack;
+  for (iterStack = m_hypoStackColl.begin() ; iterStack != m_hypoStackColl.end() ; ++iterStack) {
+    // check if decoding ran out of time
+    double _elapsed_time = GetUserTime();
+    if (_elapsed_time > staticData.GetTimeoutThreshold()) {
+      VERBOSE(1,"Decoding is out of time (" << _elapsed_time << "," << staticData.GetTimeoutThreshold() << ")" << std::endl);
+      interrupted_flag = 1;
+      return;
+    }
+    HypothesisStackNormal &sourceHypoColl = *static_cast<HypothesisStackNormal*>(*iterStack);
+
+    // the stack is pruned before processing (lazy pruning):
+    VERBOSE(3,"processing hypothesis from next stack");
+    IFVERBOSE(2) {
+      stats.StartTimeStack();
+    }
+    sourceHypoColl.PruneToSize(staticData.GetMaxHypoStackSize());
+    VERBOSE(3,std::endl);
+    sourceHypoColl.CleanupArcList();
+    IFVERBOSE(2) {
+      stats.StopTimeStack();
+    }
+
+    // go through each hypothesis on the stack and try to expand it
+    HypothesisStackNormal::const_iterator iterHypo;
+    for (iterHypo = sourceHypoColl.begin() ; iterHypo != sourceHypoColl.end() ; ++iterHypo) {
+      Hypothesis &hypothesis = **iterHypo;
+      hypothesis.UpdateHypothesisCoverage();
+      ProcessOneHypothesis(hypothesis); // expand the hypothesis
+    }
+    // some logging
+    IFVERBOSE(2) {
+      OutputHypoStackSize();
+    }
+
+    // this stack is fully expanded;
+    actual_hypoStack = &sourceHypoColl;
+    
+    //HypothesisStackNormal::const_iterator iterHypo;
+    for (iterHypo = sourceHypoColl.begin()++ ; iterHypo != sourceHypoColl.end() ; ++iterHypo) {
+      VERBOSE(1," "<<**iterHypo << endl);
+    }
+
+  }
+  //OutputHypoStack();
+}
 
 /** Find all translation options to expand one hypothesis, trigger expansion
  * this is mostly a check for overlap with already covered words, and for

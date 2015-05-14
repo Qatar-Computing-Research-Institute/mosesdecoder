@@ -53,14 +53,16 @@ InputPath::~InputPath()
 const TargetPhraseCollection *InputPath::GetTargetPhrases(const PhraseDictionary &phraseDictionary) const
 {
   VERBOSE( 1, "InputPath::GetTargetPhrases called for PhraseDictionary with id " << phraseDictionary.GetId() << endl);
+;
 
   std::map<const PhraseDictionary*, std::pair<const TargetPhraseCollection*, const void*> >::const_iterator iter;
+  
   iter = m_targetPhrases.find(&phraseDictionary);
   if (iter == m_targetPhrases.end()) {
     VERBOSE( 1, "InputPath::GetTargetPhrases - we didn't find any" << endl);
     return NULL;
   }
-  VERBOSE(1, "InputPath::GetTargetPhrases - iter->first" << endl);
+  VERBOSE(1, "InputPath::GetTargetPhrases -  iter->first "<< endl);
   return iter->second.first;
 }
 

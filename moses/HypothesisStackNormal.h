@@ -38,7 +38,8 @@ class HypothesisStackNormal: public HypothesisStack
 {
 public:
   friend std::ostream& operator<<(std::ostream&, const HypothesisStackNormal&);
-
+/** destroy all instances of Hypothesis in this collection */
+  void RemoveAll();
 protected:
   float m_bestScore; /**< score of the best hypothesis in collection */
   float m_worstScore; /**< score of the worse hypothesis in collection */
@@ -53,8 +54,7 @@ protected:
    */
   std::pair<HypothesisStackNormal::iterator, bool> Add(Hypothesis *hypothesis);
 
-  /** destroy all instances of Hypothesis in this collection */
-  void RemoveAll();
+  
 
   void SetWorstScoreForBitmap( WordsBitmapID id, float worstScore ) {
     m_diversityWorstScore[ id ] = worstScore;
