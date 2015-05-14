@@ -147,6 +147,7 @@ void TranslationTask
 
   std::cerr<<"Got to here 1"<<endl;
   boost::shared_ptr<Manager> const & manager=boost::static_pointer_cast<Manager>(p_manager);
+  
   std::cerr<<"Got to here 2"<<endl;
   manager->ContinueDecode();
 

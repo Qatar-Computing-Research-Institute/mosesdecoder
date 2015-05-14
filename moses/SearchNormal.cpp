@@ -126,15 +126,18 @@ void SearchNormal::ResumeDecode()
     std::vector < HypothesisStack* >::iterator iterStack;
     for (iterStack = m_hypoStackColl.begin() ; iterStack != m_hypoStackColl.end() ; ++iterStack) {
 
-      HypothesisStackNormal &sourceHypoColl = *static_cast<HypothesisStackNormal*>(*iterStack);
-      sourceHypoColl.RemoveAll();
+      //HypothesisStackNormal &sourceHypoColl = *static_cast<HypothesisStackNormal*>(*iterStack);
+      (*iterStack)->RemoveAll();
+      //sourceHypoColl.RemoveAll();
     }
-    // Start allover again
+
+
+  }
+   // m_hypoStackColl[0]->RemoveAll();
+      // Start allover again
     Decode();
 
     return;
-
-  }
 
   // go through each stack
   std::vector < HypothesisStack* >::iterator iterStack;
@@ -204,6 +207,10 @@ ProcessOneHypothesis(const Hypothesis &hypothesis)
   ReorderingConstraint const&
   ReoConstraint = m_source.GetReorderingConstraint();
 
+  if (hypoBitmap.GetSize()!= m_source.GetSize())
+  {
+    VERBOSE(1,"This hypothesis is not working"<<endl);
+  }
   // no limit of reordering: only check for overlap
   if (maxDistortion < 0) {
 

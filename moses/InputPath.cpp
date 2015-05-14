@@ -62,7 +62,15 @@ const TargetPhraseCollection *InputPath::GetTargetPhrases(const PhraseDictionary
     VERBOSE( 1, "InputPath::GetTargetPhrases - we didn't find any" << endl);
     return NULL;
   }
-  VERBOSE(1, "InputPath::GetTargetPhrases -  iter->first "<< endl);
+  //VERBOSE(1, "InputPath::GetTargetPhrases -  iter->first "<< endl);
+  if( iter->second.first != NULL){ 
+    VERBOSE(1,"For "<< GetPhrase()<< " We found at least "<< iter->second.first->GetSize() << endl); 
+  }
+  else
+  {
+    VERBOSE(1,"For "<< GetPhrase()<< " We found none " << endl); 
+    //return NULL;
+  }
   return iter->second.first;
 }
 
