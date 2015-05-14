@@ -44,6 +44,9 @@ HypothesisStackNormal::HypothesisStackNormal(Manager& manager) :
 /** remove all hypotheses from the collection */
 void HypothesisStackNormal::RemoveAll()
 {
+  m_bestScore = -std::numeric_limits<float>::infinity();
+  m_worstScore = -std::numeric_limits<float>::infinity();
+
   while (m_hypos.begin() != m_hypos.end()) {
     Remove(m_hypos.begin());
   }

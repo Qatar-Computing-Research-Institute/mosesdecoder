@@ -543,7 +543,7 @@ ExpandTranslationOptions()
   
   ProcessUnknownWord();
   EvaluateWithSourceContext();
-  VERBOSE(3,"TranslationOptionCollection::ExpandTranslationOptions Translation Option Collection\n " << *this << endl);
+  VERBOSE(3,"Translation Option Collection" << endl << *this << endl);
   Prune();
   Sort();
   // sv: !!! the future cost calculation needs to be modified to remove redundant calculation
