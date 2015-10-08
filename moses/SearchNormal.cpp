@@ -119,7 +119,7 @@ void SearchNormal::ResumeDecode()
   const StaticData &staticData = StaticData::Instance();
   SentenceStats &stats = m_manager.GetSentenceStats();
 
-  if (true)
+  if (false)
   {
 
     //Delete all hypotheses
@@ -135,9 +135,9 @@ void SearchNormal::ResumeDecode()
   }
    // m_hypoStackColl[0]->RemoveAll();
       // Start allover again
-    Decode();
+   // Decode();
 
-    return;
+   // return;
 
   // go through each stack
   std::vector < HypothesisStack* >::iterator iterStack;
@@ -210,6 +210,7 @@ ProcessOneHypothesis(const Hypothesis &hypothesis)
   if (hypoBitmap.GetSize()!= m_source.GetSize())
   {
     VERBOSE(1,"This hypothesis is not working"<<endl);
+    return;
   }
   // no limit of reordering: only check for overlap
   if (maxDistortion < 0) {
@@ -305,10 +306,11 @@ ProcessOneHypothesis(const Hypothesis &hypothesis)
       if (isLeftMostEdge) {
         // any length extension is okay if starting at left-most edge
         ExpandAllHypotheses(hypothesis, startPos, endPos);
-      } else { // starting somewhere other than left-most edge, use caution
+      } else { 
+        // starting somewhere other than left-most edge, use caution
         // the basic idea is this: we would like to translate a phrase
         // starting from a position further right than the left-most
-        // open gap. The distortion penalty for the following phrase
+        // open gap. The distortion penalty for the  phrase
         // will be computed relative to the ending position of the
         // current extension, so we ask now what its maximum value will
         // be (which will always be the value of the hypothesis starting
