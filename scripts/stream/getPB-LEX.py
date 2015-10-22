@@ -1,15 +1,17 @@
-
+from itertools import izip_longest, chain
+from itertools import chain
 import sys
 
-def flatten(seq,container=None):
-    if container is None:
-        container = []
-    for s in seq:
-        if hasattr(s,'__iter__'):
-            flatten(s,container)
-        else:
-            container.append(s)
-    return container
+
+def flatten(listOfLists):
+    "Flatten one level of nesting"
+    return chain.from_iterable(listOfLists)
+
+def grouper( n,iterable, fillvalue=[]):
+    "Collect data into fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+    args = [iter(iterable)] * n
+    return izip_longest(fillvalue=fillvalue, *args)
 
 def getBoundaries(line,index=0):
 
@@ -44,7 +46,7 @@ def getBoundaries(line,index=0):
 
 		if len(lex) <1: 
 			continue
-		if lex[-1] in ['#','+']:
+		if lex[-1] in ['#','+'] or lex[0] in ['#','+'] : #we want to keep morphemes together
 			continue
 		if tag in ['CC']: #if we have conjunction, we don't change phrase
 			continue
@@ -63,7 +65,7 @@ def getBoundaries(line,index=0):
 
 
 
-def processText(chunks,original):
+def processText(chunks,original,nchunks=1):
 	fh=open(chunks,'r')
 	fh2=open(original,'r')
 
@@ -79,18 +81,19 @@ def processText(chunks,original):
 
 		words = oline.split()
 		counter=0
-		
-		for phrase in phrases:	
+		merged_phrases = list(grouper(nchunks,phrases))
+		for phrase in merged_phrases:	
+			flat=list(flatten(phrase))
 			try:		
-				fout.write(" ".join([words[counter+x] for x in range(len(phrase))]) + "\n")
+				fout.write(" ".join([words[counter+x] for x in range(len(flat))]) + "\n")
 			except:
-				print phrase, len(words)
+				print flat, len(words)
 
-			counter += len(phrase)
+			counter += len(flat)
 		
 		#	
 
-		index+=len(phrases)
+		index+=len(merged_phrases)
 		if counter < len(words):
 			fout.write(" ".join([words[x] for x in range(counter,len(words))]) + "\n")
 			index +=1
@@ -102,9 +105,14 @@ def processText(chunks,original):
 
 
 if __name__=="__main__":
-	if(len(sys.argv) > 1):
+	chunks=1
 
-		processText(sys.argv[1],sys.argv[2])
+	if (len(sys.argv)>3):
+		chunks=int(sys.argv[3])
+	print "running with chunks " + str(chunks)
+	if(len(sys.argv) > 2):
+
+		processText(sys.argv[1],sys.argv[2],chunks)
 	else:
-		processText("tst/tst2010.input.chunks.3","tst/tst2010.input.tok.1")
+		processText("tst/tst2010.input.chunks.3","tst/tst2010.input.tok.1",chunks)
 
