@@ -1403,7 +1403,7 @@ weave-output
 	rerun-on-change: output-weaver input-segmenter
 	pass-if: TRAINING:hierarchical-rule-set use-cdec use-jane
 	pass-unless: input-segmenter output-weaver
-	template: $output-weaver IN IN1.key > OUT
+	template: $output-weaver IN IN1 > OUT
 
 recase-output
 	in: cleaned-output RECASING:recase-config
