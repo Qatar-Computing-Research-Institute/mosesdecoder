@@ -1,20 +1,19 @@
 #!/bin/bash
 
-INPUT = "$1"
-KEYFILE= "$2"
-OUTPUT = "$3"
-ARGS = "$4"
-my $rN = rand();
+INPUT="$1"
+KEYFILE="$3"
+OUTPUT="$2"
+OTHER="$4"
 
 
 # put segment the input
-perl  /work/stream/scripts/AMIRA_NOTOK_NONORM.pl config=/work/stream/scripts/amiraconfig.atb.bpc.utf8 file=$INPUT
+#perl  /work/stream/scripts/AMIRA_NOTOK_NONORM.pl config=/work/stream/scripts/amiraconfig.atb.bpc.utf8 file=$INPUT
 
 # produce segmentation
-python /work/stream/scripts/getPB-LEX.py $INPUT.amirapbc $ARGS
+python /work/stream/scripts/getPB-LEX.py $INPUT $OTHER
 
 # produce keyfile
-mv $INPUT.amirapbc.segs.idx $KEYFILE
+mv $INPUT.segs.idx $KEYFILE
 
 # produce textfile
-mv $INPUT.amirapbc.segs.txt $OUTPUT
+mv $INPUT.segs.txt $OUTPUT

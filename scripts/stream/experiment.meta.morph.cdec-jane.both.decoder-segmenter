@@ -1273,16 +1273,25 @@ truecase-input
 	rerun-on-change: input-truecaser
 	ignore-unless: input-truecaser
         template: $input-truecaser -model IN1.$input-extension < IN > OUT
+
 split-input
 	in: truecased-input SPLITTER:splitter-model
-	out: split-input
+	out: input
 	default-name: evaluation/input.split
 	pass-unless: input-splitter
 	template: $input-splitter -model IN1.$input-extension < IN > OUT
 
+chunk-input
+  in: input
+  out: chunked-input
+  default-name: evaluation/input.chunks
+  pass-unless: input-chunker 
+  template: $input-chunker IN OUT 
+
+
 segment-input
-	in: split-input
-	out: input
+	in: chunked-input
+	out: segmented-input
 	default-name: evaluation/input.segs
 	rerun-on-change: input-segmenter
 	pass-unless: input-segmenter output-weaver
@@ -1323,12 +1332,12 @@ cdec-filter
   template: python -m cdec.sa.extract -c IN.ini -g IN2 -j 10 -z < IN1 > OUT
 
 decode
-	in: filtered-config input
+	in: filtered-config segmented-input
 	out: system-output
 	default-name: evaluation/output
 	qsub-script: yes
 	ignore-if: use-hiero use-cdec use-jane 
-	rerun-on-change: decoder decoder-settings nbest report-segmentation report-precision-by-coverage analyze-search-graph
+	rerun-on-change: decoder decoder-settings nbest report-segmentation report-precision-by-coverage analyze-search-graph input-segmenter input-segmenter-settings
 	error: Translation was not performed correctly
 	not-error: trans: No such file or directory
 
@@ -1389,12 +1398,12 @@ remove-markup
 
 weave-output
 	in: unmarked-output segment-input
-	out: clean-output
+	out: cleaned-output
 	default-name: evaluation/cleaned
 	rerun-on-change: output-weaver input-segmenter
 	pass-if: TRAINING:hierarchical-rule-set use-cdec use-jane
 	pass-unless: input-segmenter output-weaver
-	template: $output-weaver $IN $IN1.key > OUT
+	template: $output-weaver IN IN1.key > OUT
 
 recase-output
 	in: cleaned-output RECASING:recase-config
