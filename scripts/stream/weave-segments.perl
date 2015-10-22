@@ -17,7 +17,7 @@ while (<$fh>) {
 close $fh or die "Cannot close $input_file: $!";
 
 
-open($fh, '<:encoding(UTF-8)', $key_file)
+open($fh.".key", '<:encoding(UTF-8)', $key_file)
    or die "Could not open file '$key_file' $!";
 
 my $j = 0;
