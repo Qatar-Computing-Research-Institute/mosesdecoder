@@ -1,14 +1,24 @@
 
 import sys
 
+def flatten(seq,container=None):
+    if container is None:
+        container = []
+    for s in seq:
+        if hasattr(s,'__iter__'):
+            flatten(s,container)
+        else:
+            container.append(s)
+    return container
 
 def getBoundaries(line,index=0):
 
-	indices=[]
-	words=[]
-	phrase=0
+	#indices=[]
+	words=[[]]
+	#phrase=0
 	#memberships=[]
 	wordsinline=line.split()
+	wordid =0
 	for idx,word in enumerate(wordsinline):
 		
 		if word[0]=="[":
@@ -21,14 +31,14 @@ def getBoundaries(line,index=0):
 		tag=tag.replace(']','');
 			
 		if tag == 'PUNC': #TODO use regex to make efficient
-			if wordsinline[idx-1][-1]=="]": #if a previous phrase was found, we attach the punctuation to it 
-				phrase-=1
+			if not len(words[-1]) and len(words) >1:
+				words.pop()
 
-		indices.append(phrase)
+		#indices.append(phrase)
 		
-		words.append(lex)
-		
-	#	print "%d %d %s %s %s"%(index,phrase,lex,tag,word)
+		words[-1].append(lex)
+		#wordid +=1
+		#print "%d %d %s %s %s"%(index,phrase,lex,tag,word)
 		#memberships.append(str(phrase))
 		#print idx, word,phrase
 
@@ -38,35 +48,53 @@ def getBoundaries(line,index=0):
 			continue
 		if tag in ['CC']: #if we have conjunction, we don't change phrase
 			continue
-		if word[-1]=="]":
-			phrase+=1
-	
-	#print " ".join(memberships)	
-	return (words,indices)
+		if word[-1]=="]":  #we create a new phrase
+			#phrase+=1
+			words.append([])
+	if len(words[-1]) ==0:
+		words.pop()
+	if words[-1][-1] =="":
+		words[-1].pop()
+	#print " ".join(memberships)
+	#for i in range(len(words)):
+	#	if len(word)	
+	return words
 
 
 
 
-def processText(file):
-	fh=open(file,'r')
-	fout=open(file+'.segs.txt','w')
-	fout2=open(file+'.segs.idx','w')
+def processText(chunks,original):
+	fh=open(chunks,'r')
+	fh2=open(original,'r')
+
+	fout=open(chunks+'.segs.txt','w')
+	fout2=open(chunks+'.segs.idx','w')
 	index=0
 	ln=0
-	for line in fh:
-		[words,indices]=getBoundaries(line,ln)
-		windex=0
+	for line, oline in zip(fh,fh2):
+		phrases=getBoundaries(line,0)
 		current=[]
-		for word,idx in zip(words,indices):
-			if windex != idx:
-				fout.write(" ".join(current) + "\n")
-				windex+=1
-				current=[]
-			current.append(word)
-		fout.write(" ".join(current) + "\n")
+		#print "---"+str(ln)+":"+ line
+		#print "---"+str(ln)+":" + str(phrases)+"\n"
 
-		index+=windex+1
-		ln+=1
+		words = oline.split()
+		counter=0
+		
+		for phrase in phrases:	
+			try:		
+				fout.write(" ".join([words[counter+x] for x in range(len(phrase))]) + "\n")
+			except:
+				print phrase, len(words)
+
+			counter += len(phrase)
+		
+		#	
+
+		index+=len(phrases)
+		if counter < len(words):
+			fout.write(" ".join([words[x] for x in range(counter,len(words))]) + "\n")
+			index +=1
+		#ln+=1
 		fout2.write(str(index)+"\n")
 	fout2.close()
 	fout.close()
@@ -76,7 +104,7 @@ def processText(file):
 if __name__=="__main__":
 	if(len(sys.argv) > 1):
 
-		processText(sys.argv[1])
+		processText(sys.argv[1],sys.argv[2])
 	else:
-		processText("hungary.txt.amirabpc")
+		processText("tst/tst2010.input.chunks.3","tst/tst2010.input.tok.1")
 

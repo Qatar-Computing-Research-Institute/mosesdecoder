@@ -1290,12 +1290,12 @@ chunk-input
 
 
 segment-input
-	in: chunked-input
+	in: chunked-input input
 	out: segmented-input
 	default-name: evaluation/input.segs
 	rerun-on-change: input-segmenter
 	pass-unless: input-segmenter output-weaver
-	template: $input-segmenter IN OUT OUT.key $input-segmenter-settings
+	template: $input-segmenter IN1 IN OUT OUT.key $input-segmenter-settings
 
 
 filter

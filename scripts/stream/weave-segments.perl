@@ -28,14 +28,17 @@ while (my $row = <$fh>) {
 
 	$output = "";
 
-	while ( $j <= $row)
+	my @tmp;
+	while ( $j < $row)
 	{
+	 push(@tmp,$lines[$j]);
 	  
-	 $output = $output . $lines[$j]; 
+	 #$output = $output ." ". $lines[$j]; 
 	  $j++;
 	}
 
 
-	print "$output\n";
+	print join(" ",@tmp)."\n";
+	# $output\n";
 }
  
