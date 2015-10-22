@@ -81,7 +81,14 @@ def processText(chunks,original,nchunks=1):
 
 		words = oline.split()
 		counter=0
+
+		total=len(list(flatten(phrases))) #check how many words do we have
+		if total < len(words): # if we have less, then we add the remaining ones
+			phrases.append(range(total,len(words)))
+
+
 		merged_phrases = list(grouper(nchunks,phrases))
+
 		for phrase in merged_phrases:	
 			flat=list(flatten(phrase))
 			try:		
@@ -94,9 +101,9 @@ def processText(chunks,original,nchunks=1):
 		#	
 
 		index+=len(merged_phrases)
-		if counter < len(words):
-			fout.write(" ".join([words[x] for x in range(counter,len(words))]) + "\n")
-			index +=1
+		#if counter < len(words):
+		#	fout.write(" ".join([words[x] for x in range(counter,len(words))]) + "\n")
+		#	index +=1
 		#ln+=1
 		fout2.write(str(index)+"\n")
 	fout2.close()
@@ -109,7 +116,7 @@ if __name__=="__main__":
 
 	if (len(sys.argv)>3):
 		chunks=int(sys.argv[3])
-	print "running with chunks " + str(chunks)
+	#print "running with chunks " + str(chunks)
 	if(len(sys.argv) > 2):
 
 		processText(sys.argv[1],sys.argv[2],chunks)
