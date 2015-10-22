@@ -13,7 +13,11 @@ def getBoundaries(line,index=0):
 		
 		if word[0]=="[":
 			continue
-		(lex,tag)=word.split("/")
+		if len(word.split("/")) > 2:
+			lex="/"
+			tag="PUNC"
+		else:
+			(lex,tag)=word.split("/")
 		tag=tag.replace(']','');
 			
 		if tag == 'PUNC': #TODO use regex to make efficient
@@ -24,7 +28,7 @@ def getBoundaries(line,index=0):
 		
 		words.append(lex)
 		
-		#print "%d %d %s %s %s"%(index,phrase,lex,tag,word)
+	#	print "%d %d %s %s %s"%(index,phrase,lex,tag,word)
 		#memberships.append(str(phrase))
 		#print idx, word,phrase
 
@@ -48,8 +52,9 @@ def processText(file):
 	fout=open(file+'.segs.txt','w')
 	fout2=open(file+'.segs.idx','w')
 	index=0
+	ln=0
 	for line in fh:
-		[words,indices]=getBoundaries(line,index)
+		[words,indices]=getBoundaries(line,ln)
 		windex=0
 		current=[]
 		for word,idx in zip(words,indices):
@@ -60,7 +65,8 @@ def processText(file):
 			current.append(word)
 		fout.write(" ".join(current) + "\n")
 
-		index+=windex+1	
+		index+=windex+1
+		ln+=1
 		fout2.write(str(index)+"\n")
 	fout2.close()
 	fout.close()
