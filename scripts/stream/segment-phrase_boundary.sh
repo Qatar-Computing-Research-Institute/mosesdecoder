@@ -2,8 +2,8 @@
 
 INPUT="$1"
 CHUNKED="$2"
-KEYFILE="$4"
 OUTPUT="$3"
+KEYFILE="$4"
 OTHER="$5"
 
 
