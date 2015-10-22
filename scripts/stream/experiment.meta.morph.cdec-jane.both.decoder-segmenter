@@ -1284,6 +1284,7 @@ segment-input
 	in: split-input
 	out: input
 	default-name: evaluation/input.segs
+	rerun-on-change: input-segmenter
 	pass-unless: input-segmenter output-weaver
 	template: $input-segmenter IN OUT OUT.key $input-segmenter-settings
 
@@ -1390,6 +1391,7 @@ weave-output
 	in: unmarked-output segment-input
 	out: clean-output
 	default-name: evaluation/cleaned
+	rerun-on-change: output-weaver input-segmenter
 	pass-if: TRAINING:hierarchical-rule-set use-cdec use-jane
 	pass-unless: input-segmenter output-weaver
 	template: $output-weaver $IN $IN1.key > OUT
