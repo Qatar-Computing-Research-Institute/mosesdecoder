@@ -100,7 +100,7 @@ def processText(chunks,original,nchunks=1):
 		fout.write("\n")
 		#	
 
-		index+=len(merged_phrases)
+		index+=1
 		#if counter < len(words):
 		#	fout.write(" ".join([words[x] for x in range(counter,len(words))]) + "\n")
 		#	index +=1
