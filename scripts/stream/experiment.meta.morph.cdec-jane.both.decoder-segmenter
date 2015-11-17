@@ -1293,7 +1293,7 @@ segment-input
 	in: chunked-input input
 	out: segmented-input
 	default-name: evaluation/input.segs
-	rerun-on-change: input-segmenter
+	rerun-on-change: input-segmenter input-segmenter-settings
 	pass-unless: input-segmenter output-weaver
 	template: $input-segmenter IN1 IN OUT OUT.key $input-segmenter-settings
 
@@ -1397,7 +1397,7 @@ remove-markup
 	template: $moses-script-dir/ems/support/remove-segmentation-markup.perl < IN > OUT
 
 weave-output
-	in: unmarked-output segment-input
+	in: unmarked-output segmented-input
 	out: cleaned-output
 	default-name: evaluation/cleaned
 	rerun-on-change: output-weaver input-segmenter

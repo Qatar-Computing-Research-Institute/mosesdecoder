@@ -29,7 +29,7 @@ def main(phrase_table,file):
 			#print " ".join([x+"/WORD" for x in cur.split()])
 			#print [x+"/WORD" for x in cur.split()]
 			if  (cur+" "+word)  not in model :
-				sys.stdout.write("[PX %s]"%(" ".join([x+"/WORD" for x in cur.split()])))
+				sys.stdout.write("[PX %s] "%(" ".join([x+"/WORD" for x in cur.split()])))
 				cur=word
 			else:
 				cur = cur+" "+word
