@@ -1,9 +1,9 @@
 #!/usr/bin/python
 import sys
 import gzip
-import phrasetable
+import regex
 
-def main(phrase_table,file):
+def loadPTSources(phrase_table):
 	model={}
 	if ".gz" in phrase_table:
 		fh=gzip.open(phrase_table)
@@ -11,12 +11,16 @@ def main(phrase_table,file):
 		fh=open(phrase_table)
 
 	for phrase in fh:
-		source= phrasetable.split(phrase)[0]
+		source= regex.ptSplit(phrase.rstrip())[0]
 		if source in model:
 			continue
 		else:
 			model[source]=True
 	fh.close()
+	return model
+
+def main(phrase_table,file):
+	model=loadPTSources(phrase_table)
 
 	fh = open(file)
 	for line in fh:
