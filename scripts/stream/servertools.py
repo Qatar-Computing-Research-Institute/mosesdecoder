@@ -15,6 +15,46 @@ import shlex
 import gzip
 
 
+class Result:
+    def __init__(self,flush=False):
+        self.result=[]
+        self.flush=flush
+
+    def append(self,item):
+
+
+
+        if self.flush:
+            if len(self.result) >0:
+                sys.stdout.write(" ")
+            if type(item)==list:
+                sys.stdout.write(" ".join(item))
+            else:
+                sys.stdout.write(item)
+            sys.stdout.flush()
+
+        if type(item)==list:
+            self.result += item
+        else:
+            self.result.append(item)
+
+        #self.result.append(item)
+
+    def __str__(self):
+        if self.flush:
+            return ""
+        else:
+            return " ".join(self.result)
+        
+
+    def __repr__(self):
+        if self.flush:
+            return ""
+        else:
+            return str(self)
+        #sys.stdout.flush()   
+        #return 
+
 class MosesServer:
     def __init__(self,mosesexec,args):
         self.exe =mosesexec
@@ -170,7 +210,7 @@ def translateInParts(proxy,seg_model,text,nbest_size=100,window=3):
     
     prev_res=cur_res=prev_to_trans=prev_to_trans_xml=current=""
     prev_nbest=None
-    result=[]
+    result=Result(flush=True)
 
     now=time.time()
     #print "transating::%s"%(text)
@@ -225,7 +265,7 @@ def translateInParts(proxy,seg_model,text,nbest_size=100,window=3):
 
     result.append(cur_res.replace("&quot;","\""))
     #print"(%0.3f secs) translated::%s"%(time.time()-now," ".join(result))
-    return " ".join(result)
+    return result
 
 def testSegment(text=None):
     if text ==None:
@@ -234,18 +274,19 @@ def testSegment(text=None):
     seg_model=loadPTSources("/Users/guzmanhe/Projects/streamed_decoder/sample-models/phrase-model/phrase-table")
     proxy=connect()
     trans={}
-    trials=100
+    trials=10
     timestart=time.time()
     for i in range(trials):
         hyp=translateInParts(proxy,seg_model,text)
         print hyp
         try:
-            trans[hyp]+=1.0
+            trans[str(hyp)]+=1.0
         except KeyError:
-            trans[hyp]=1.0
+            trans[str(hyp)]=1.0
+    #print trans.values()
     most_consistent=max(trans.values())
     totaltime=time.time()-timestart
-    print "Consistency is %0.1f pct "%(most_consistent*100.0/float(trials))
+    print "Consistency is %0.1f pct "%(most_consistent*100/float(trials))
     print "Total time was %0.1f secs, %0.5f per transl"%(totaltime,totaltime/float(trials))
 
 
