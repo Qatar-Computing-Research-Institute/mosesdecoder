@@ -72,6 +72,7 @@ if __name__ == '__main__':
         mypt=sys.argv[2]
         mosesargs=" ".join(sys.argv[3:])
 
+
     launcher = servertools.MosesServer(mosesexec,mosesargs)
     ptsources= servertools.loadPTSources(mypt)
     main(launcher,ptsources)

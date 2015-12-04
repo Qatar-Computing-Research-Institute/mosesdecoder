@@ -26,12 +26,14 @@ class MosesServer:
         #print string
         args=shlex.split(string)
         #print args
+        sys.stderr.write("launching moses with arguments %s\n"%(string))
         self.stream = subprocess.Popen(args,shell=False)
 
     def isopen(self):
         return self.stream != None
+
     def close(self):
-        if self.isopen:
+        if self.isopen():
             self.stream.kill()
     
     def __del__(self):
@@ -120,11 +122,11 @@ def translate(proxy,params,string,nbest_size,to_keep=0,retry=0): #to_keep=0 mean
     #print "translated:::: %s"%(res)
     if 'nbest' in result:
         nbest=getFinal(result['nbest'],nbest_size,to_keep)
-        nbest.append((res,0.8))
+        #nbest.append((res,0.05))
     else:
         (nres,nnbest)=translate(proxy,params,string,nbest_size,to_keep,retry+1)
         if nnbest==None:
-            nbest=[(res,0.8)]
+            nbest=[(res,0.05)]
         else:
             nbest=nnbest
         #nbest=[(res,0.8)]
@@ -151,15 +153,14 @@ def connect():
 
 
 
-
-
 def createprevXML(prev_nbest,prev_to_trans,prev_res):
     if prev_to_trans=="":
         return ""
     elif len(prev_nbest) ==0:
-        return "<zone><np translation=\"%s\">%s</np> <wall /></zone>"%(prev_res,prev_to_trans)
-
-    return "<zone><np translation=\"%s\" prob=\"%s\">%s</np> <wall /> </zone>"%("||".join([x[0] for x in prev_nbest]),"||".join(["%0.5f"%(x[1]) for x in prev_nbest]),prev_to_trans)
+        string="<zone><np translation=\"%s\">%s</np> <wall /></zone>"%(prev_res.replace('"',"&quot;"),prev_to_trans.replace('"',"&quot;"))
+    else: 
+        string= "<zone><np translation=\"%s\" prob=\"%s\">%s</np> <wall /> </zone>"%("||".join([x[0] for x in prev_nbest]).replace('"',"&quot;"),"||".join(["%0.5f"%(x[1]) for x in prev_nbest]),prev_to_trans.replace('"',"&quot;"))
+    return string
 
 def translateInParts(proxy,seg_model,text,nbest_size=100,window=3):
 
@@ -233,7 +234,7 @@ def testSegment(text=None):
     seg_model=loadPTSources("/Users/guzmanhe/Projects/streamed_decoder/sample-models/phrase-model/phrase-table")
     proxy=connect()
     trans={}
-    trials=1000
+    trials=100
     timestart=time.time()
     for i in range(trials):
         hyp=translateInParts(proxy,seg_model,text)
