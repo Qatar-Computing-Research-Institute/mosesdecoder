@@ -197,7 +197,7 @@ def translateInParts(proxy,seg_model,text,nbest_size=100,window=3):
                     cutoff = min (intersect,len(cur_words)-window)
 
                     stable = " ".join(cur_words[:cutoff])
-                    result.append(stable)
+                    result.append(stable.replace("&quot;","\""))
                     prev_res=" ".join(cur_words[cutoff:])
                     prev_nbest = pruneNbest(prev_nbest,cutoff) #prune nbest
                     #print "stable_hyp (%d)::%s"%(cutoff, stable)
@@ -223,7 +223,7 @@ def translateInParts(proxy,seg_model,text,nbest_size=100,window=3):
 
     (cur_res,prev_nbest)=translate(proxy,params,prev_to_trans_xml + current,nbest_size,window)
 
-    result.append(cur_res)
+    result.append(cur_res.replace("&quot;","\""))
     #print"(%0.3f secs) translated::%s"%(time.time()-now," ".join(result))
     return " ".join(result)
 
