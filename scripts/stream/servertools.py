@@ -128,7 +128,7 @@ def getFinal(nbest,nbest_size=100,length=0):
     #print nbest[0]
     total=0.0
     for n in nbest[:nbest_size]:
-        #print n['hyp']
+        print n['hyp']
         string=" ".join([ x.split("|")[0] for x in n['hyp'].split()[-(length):] ]).encode("utf-8")
         score=float(n['totalScore'])
         total+=math.exp(score)
@@ -153,7 +153,7 @@ def translate(proxy,params,string,nbest_size,to_keep=0,retry=0): #to_keep=0 mean
         return ("no_translation_possible",None)
 
     params['text']=string
-    #print "before translating::::: %s "%(string)
+    print "before translating::::: %s "%(string)
     try: 
         result = proxy.translate(params)
     except xmlrpclib.ProtocolError:
@@ -161,7 +161,7 @@ def translate(proxy,params,string,nbest_size,to_keep=0,retry=0): #to_keep=0 mean
         return translate(proxy,params,string,nbest_size,to_keep,retry+1)
     
     res= clean(result['text'].encode("utf-8"))
-    #print "translated:::: %s"%(res)
+    print "translated:::: %s"%(res)
     if 'nbest' in result:
         nbest=getFinal(result['nbest'],nbest_size,to_keep)
         #nbest.append((res,0.05))
@@ -199,12 +199,12 @@ def createprevXML(prev_nbest,prev_to_trans,prev_res):
     if prev_to_trans=="":
         return ""
     elif len(prev_nbest) ==0:
-        string="<zone><np translation=\"%s\">%s</np> <wall /></zone>"%(prev_res.replace('"',"&quot;"),prev_to_trans.replace('"',"&quot;"))
+        string="<np translation=\"%s\">%s</np> <wall />"%(prev_res.replace('"',"&quot;"),prev_to_trans.replace('"',"&quot;"))
     else: 
-        string= "<zone><np translation=\"%s\" prob=\"%s\">%s</np> <wall /> </zone>"%("||".join([x[0] for x in prev_nbest]).replace('"',"&quot;"),"||".join(["%0.5f"%(x[1]) for x in prev_nbest]),prev_to_trans.replace('"',"&quot;"))
+        string= "<np translation=\"%s\" prob=\"%s\">%s</np> <wall />"%("||".join([x[0] for x in prev_nbest]).replace('"',"&quot;"),"||".join(["%0.5f"%(x[1]) for x in prev_nbest]),prev_to_trans.replace('"',"&quot;"))
     return string
 
-def translateInParts(proxy,seg_model,text,nbest_size=100,window=3):
+def translateInParts(proxy,seg_model,text,nbest_size=10,window=3):
 
     
 
@@ -212,7 +212,7 @@ def translateInParts(proxy,seg_model,text,nbest_size=100,window=3):
     
     prev_res=cur_res=prev_to_trans=prev_to_trans_xml=current=""
     prev_nbest=None
-    result=Result(flush=True)
+    result=Result(flush=False)
 
     now=time.time()
     #print "transating::%s"%(text)
@@ -241,9 +241,9 @@ def translateInParts(proxy,seg_model,text,nbest_size=100,window=3):
                     stable = " ".join(cur_words[:cutoff])
                     result.append(stable.replace("&quot;","\""))
                     prev_res=" ".join(cur_words[cutoff:])
-                    prev_nbest = pruneNbest(prev_nbest,cutoff) #prune nbest
-                    #print "stable_hyp (%d)::%s"%(cutoff, stable)
-                    #print "unstable_hyp %d::: %s"%(intersect,prev_res)
+                    prev_nbest = pruneNbest(prev_nbest,len(cur_words)-cutoff +1) #prune nbest
+                    print "stable_hyp (%d)::%s"%(cutoff, stable)
+                    print "unstable_hyp %d::: %s"%(intersect,prev_res)
                     
                     #print "current_result :::%s" %(result)
                     prev_to_trans=" ".join((prev_to_trans+" "+current).split()[cutoff:])

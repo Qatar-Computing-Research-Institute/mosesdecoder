@@ -53,7 +53,7 @@ def main(launcher,ptsources):
     #servertools.testSegment()
     for line in sys.stdin:
         trans=servertools.translateInParts(proxy,ptsources,line)
-        sys.stdout.write(trans+"\n")
+        sys.stdout.write(str(trans)+"\n")
         sys.stdout.flush()
 
     if launcher.isopen():
