@@ -87,15 +87,40 @@ def findMaxIntersect(old,new):
     #print old,"}}}",new
     for i,ab in enumerate(zip(old.split(),new.split())):
         if ab[0]!=ab[1]:
-            return i+1
+            return i
+
+    return len(old.split())
+def findMaxIntersectRev(old,new):
+    if len(old)==0:
+        return -1
+
+    #print old,"}}}",new
+    for i,ab in enumerate(zip(reversed(old.split()),reversed(new.split()))):
+        if ab[0]!=ab[1]:
+            return i
     return len(old.split())
 
-def pruneNbest(nbest,window):
+def pruneNbest(nbest,stable,unstable):
     dic={}
     for pair in nbest:
         (string,prob)=pair
         words=string.split()
-        string=" ".join(words[window:])
+        intersect=findMaxIntersect(stable,string)
+        #print stable,"|" ,string,"|" ,intersect
+        intersect2=findMaxIntersectRev(unstable,string)
+        #print unstable,"|" ,string,"|" ,intersect2
+        cutoff=0
+        if intersect+intersect2 == len(words):
+            cutoff=intersect
+        elif intersect2 >intersect:
+            cutoff=len(words)-len(unstable.split())
+        else:
+            cutoff=len(stable.split())
+
+
+        
+        string=" ".join(words[cutoff:])
+        #print string
         try:
             dic[string]+=prob
         except KeyError:
@@ -236,12 +261,12 @@ def translateInParts(proxy,seg_model,text,nbest_size=10,window=3):
                     #update result     
 
                     cur_words=cur_res.split()
-                    cutoff = min (intersect,len(cur_words)-window)
+                    cutoff = min (intersect+1,len(cur_words)-window)
 
                     stable = " ".join(cur_words[:cutoff])
                     result.append(stable.replace("&quot;","\""))
                     prev_res=" ".join(cur_words[cutoff:])
-                    prev_nbest = pruneNbest(prev_nbest,len(cur_words)-cutoff +1) #prune nbest
+                    prev_nbest = pruneNbest(prev_nbest,stable,prev_res) #prune nbest
                     print "stable_hyp (%d)::%s"%(cutoff, stable)
                     print "unstable_hyp %d::: %s"%(intersect,prev_res)
                     
