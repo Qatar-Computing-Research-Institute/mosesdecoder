@@ -86,7 +86,7 @@ def loadPTSources(phrase_table):
 def getFinal(nbest,nbest_size=100,length=0):
     diff={}
     #print nbest[0]
-    total=0
+    total=0.0
     for n in nbest[:nbest_size]:
         #print n['hyp']
         string=" ".join([ x.split("|")[0] for x in n['hyp'].split()[-(length):] ]).encode("utf-8")
@@ -97,6 +97,8 @@ def getFinal(nbest,nbest_size=100,length=0):
         except KeyError:
             diff[string]=math.exp(score)
 
+    if total<=0.0:
+      total=1.0
     #sorted_diff = sorted(diff.items(), key=operator.itemgetter(1),reverse=True)
     #print total
     for item in diff:
