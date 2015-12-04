@@ -13,7 +13,9 @@ import math
 import subprocess
 import shlex
 import gzip
+import re
 
+number=re.compile('\d+')
 
 class Result:
     def __init__(self,flush=False):
@@ -67,7 +69,7 @@ class MosesServer:
         args=shlex.split(string)
         #print args
         sys.stderr.write("launching moses with arguments %s\n"%(string))
-        self.stream = subprocess.Popen(args,shell=False)
+        self.stream = subprocess.Popen(args,shell=False,stdout=sys.stderr.fileno())
 
     def isopen(self):
         return self.stream != None
@@ -110,12 +112,15 @@ def pruneNbest(nbest,stable,unstable):
         intersect2=findMaxIntersectRev(unstable,string)
         #print unstable,"|" ,string,"|" ,intersect2
         cutoff=0
-        if intersect+intersect2 == len(words):
+        if intersect == len(stable.split()):
             cutoff=intersect
-        elif intersect2 >intersect:
+        elif intersect2 == len(unstable.split()):
             cutoff=len(words)-len(unstable.split())
         else:
-            cutoff=len(stable.split())
+            #incompatible hyp
+            #print "incompatible hyp %s"%(string)
+            continue
+            #cutoff=len(stable.split())
 
 
         
@@ -125,7 +130,7 @@ def pruneNbest(nbest,stable,unstable):
             dic[string]+=prob
         except KeyError:
             dic[string]=prob
-
+    #print dic.keys()
     sorted_diff = sorted(dic.items(), key=operator.itemgetter(1),reverse=True)
 
     #print sorted_diff
@@ -153,7 +158,7 @@ def getFinal(nbest,nbest_size=100,length=0):
     #print nbest[0]
     total=0.0
     for n in nbest[:nbest_size]:
-        print n['hyp']
+        #print n['hyp']
         string=" ".join([ x.split("|")[0] for x in n['hyp'].split()[-(length):] ]).encode("utf-8")
         score=float(n['totalScore'])
         total+=math.exp(score)
@@ -178,7 +183,7 @@ def translate(proxy,params,string,nbest_size,to_keep=0,retry=0): #to_keep=0 mean
         return ("no_translation_possible",None)
 
     params['text']=string
-    print "before translating::::: %s "%(string)
+    #print "before translating::::: %s "%(string)
     try: 
         result = proxy.translate(params)
     except xmlrpclib.ProtocolError:
@@ -186,7 +191,7 @@ def translate(proxy,params,string,nbest_size,to_keep=0,retry=0): #to_keep=0 mean
         return translate(proxy,params,string,nbest_size,to_keep,retry+1)
     
     res= clean(result['text'].encode("utf-8"))
-    print "translated:::: %s"%(res)
+    #print "translated:::: %s"%(res)
     if 'nbest' in result:
         nbest=getFinal(result['nbest'],nbest_size,to_keep)
         #nbest.append((res,0.05))
@@ -224,9 +229,10 @@ def createprevXML(prev_nbest,prev_to_trans,prev_res):
     if prev_to_trans=="":
         return ""
     elif len(prev_nbest) ==0:
-        string="<np translation=\"%s\">%s</np> <wall />"%(prev_res.replace('"',"&quot;"),prev_to_trans.replace('"',"&quot;"))
+        string="<np translation=\"%s\">%s</np> <wall /> "%(prev_res.replace('"',"&quot;"),prev_to_trans.replace('"',"&quot;"))
     else: 
-        string= "<np translation=\"%s\" prob=\"%s\">%s</np> <wall />"%("||".join([x[0] for x in prev_nbest]).replace('"',"&quot;"),"||".join(["%0.5f"%(x[1]) for x in prev_nbest]),prev_to_trans.replace('"',"&quot;"))
+        string= "<np translation=\"%s\" prob=\"%s\">%s</np> <wall /> "%("||".join([x[0] for x in prev_nbest]).replace('"',"&quot;"),"||".join(["%0.5f"%(x[1]) for x in prev_nbest]),prev_to_trans.replace('"',"&quot;"))
+    #print string
     return string
 
 def translateInParts(proxy,seg_model,text,nbest_size=10,window=3):
@@ -237,7 +243,7 @@ def translateInParts(proxy,seg_model,text,nbest_size=10,window=3):
     
     prev_res=cur_res=prev_to_trans=prev_to_trans_xml=current=""
     prev_nbest=None
-    result=Result(flush=False)
+    result=Result(flush=True)
 
     now=time.time()
     #print "transating::%s"%(text)
@@ -248,6 +254,8 @@ def translateInParts(proxy,seg_model,text,nbest_size=10,window=3):
                 
                 
                 prev_to_trans_xml= createprevXML(prev_nbest,prev_to_trans,prev_res)
+                if number.match(current) and " " not in current:
+                  current="<n translation=\"%s\">%s</n>"%(current,current)
 
                 (cur_res,prev_nbest)=translate(proxy,params,prev_to_trans_xml + current,nbest_size)
                 if (prev_nbest==None):
@@ -267,11 +275,11 @@ def translateInParts(proxy,seg_model,text,nbest_size=10,window=3):
                     result.append(stable.replace("&quot;","\""))
                     prev_res=" ".join(cur_words[cutoff:])
                     prev_nbest = pruneNbest(prev_nbest,stable,prev_res) #prune nbest
-                    print "stable_hyp (%d)::%s"%(cutoff, stable)
-                    print "unstable_hyp %d::: %s"%(intersect,prev_res)
-                    
+                    #print "stable_hyp (%d)::%s"%(cutoff, stable)
+                    #print "unstable_hyp %d::: %s"%(intersect,prev_res)
+                    #print prev_nbest 
                     #print "current_result :::%s" %(result)
-                    prev_to_trans=" ".join((prev_to_trans+" "+current).split()[cutoff:])
+                    prev_to_trans=current
                 else:
                     prev_res=cur_res
                     prev_to_trans=prev_to_trans+" "+current
@@ -305,7 +313,7 @@ def testSegment(text=None):
     timestart=time.time()
     for i in range(trials):
         hyp=translateInParts(proxy,seg_model,text)
-        print hyp
+        #print hyp
         try:
             trans[str(hyp)]+=1.0
         except KeyError:
