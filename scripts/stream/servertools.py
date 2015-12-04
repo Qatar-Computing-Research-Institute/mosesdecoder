@@ -16,14 +16,13 @@ import gzip
 
 
 class MosesServer:
-    def __init__(self,mosesexec,config,args):
+    def __init__(self,mosesexec,args):
         self.exe =mosesexec
-        self.config=config
         self.args = args
         self.stream=None
 
     def launch(self):
-        string="%s -f %s  %s --server "%(self.exe,self.config,self.args)
+        string="%s %s --server "%(self.exe,self.args)
         #print string
         args=shlex.split(string)
         #print args
@@ -166,7 +165,7 @@ def translateInParts(proxy,seg_model,text,nbest_size=100,window=3):
 
     
 
-    params = {"text":"", "align":"false", "report-all-factors":"false", "xml-input":"inclusive","nbest-size":nbest_size}
+    params = {"text":"", "align":"false", "report-all-factors":"false", "xml-input":"exclusive","nbest-size":nbest_size}
     
     prev_res=cur_res=prev_to_trans=prev_to_trans_xml=current=""
     prev_nbest=None

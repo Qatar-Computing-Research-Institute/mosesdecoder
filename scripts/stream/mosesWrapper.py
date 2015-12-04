@@ -3,14 +3,9 @@ import servertools
 import xmlrpclib
 import time
 
-mosesexec="/Users/guzmanhe/Projects/streamed_decoder/mosesdecoder/bin/moses"
-conf="/Users/guzmanhe/Projects/streamed_decoder/sample-models/phrase-model/moses.ini"
-globalargs="--xml-input inclusive "
-mypt="/Users/guzmanhe/Projects/streamed_decoder/sample-models/phrase-model/phrase-table"
 
-launcher = servertools.MosesServer(mosesexec,conf,globalargs)
 
-def launchmoses():
+def launchmoses(launcher):
     sys.stderr.write('No intance of moses found. Launching a new one\n')
     launcher.launch()
 
@@ -29,7 +24,7 @@ def launchmoses():
 
     
 
-def connect(retry=0):
+def connect(launcher,retry=0):
     if retry >1:
         raise IOError
     try:
@@ -38,7 +33,7 @@ def connect(retry=0):
         sys.stderr.write('found running instance of moses\n')
 
     except xmlrpclib.socket.error: 
-        launchmoses()
+        launchmoses(launcher)
         proxy=servertools.connect()
         #return connect(retry+1)
 
@@ -46,15 +41,15 @@ def connect(retry=0):
 
 
 
-def main(args):
+def main(launcher,ptsources):
 
     try:
-        proxy = connect()
+        proxy = connect(launcher)
     except IOError:
         sys.stderr.write("Could not connect to moses server\n")
         exit()
 
-    ptsources=servertools.loadPTSources(mypt)
+    
     #servertools.testSegment()
     for line in sys.stdin:
         trans=servertools.translateInParts(proxy,ptsources,line)
@@ -66,6 +61,19 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    
+    if len(sys.argv) <3:
+
+        mosesexec="/Users/guzmanhe/Projects/streamed_decoder/mosesdecoder/bin/moses"
+        mypt="/Users/guzmanhe/Projects/streamed_decoder/sample-models/phrase-model/phrase-table"
+        mosesargs="-f /Users/guzmanhe/Projects/streamed_decoder/sample-models/phrase-model/moses.ini --xml-input exclusive"
+    else:
+        mosesexec=sys.argv[1]
+        mypt=sys.argv[2]
+        mosesargs=" ".join(sys.argv[3:])
+
+    launcher = servertools.MosesServer(mosesexec,mosesargs)
+    ptsources= servertools.loadPTSources(mypt)
+    main(launcher,ptsources)
 
 
