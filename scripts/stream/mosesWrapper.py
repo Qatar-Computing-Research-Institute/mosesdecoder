@@ -41,7 +41,7 @@ def connect(launcher,retry=0):
 
 
 
-def main(launcher,ptsources):
+def main(launcher,ptsources,mynbest,mywindow,mynphrases):
 
     try:
         proxy = connect(launcher)
@@ -52,7 +52,7 @@ def main(launcher,ptsources):
     
     #servertools.testSegment()
     for line in sys.stdin:
-        trans=servertools.translateInParts(proxy,ptsources,line)
+        trans=servertools.translateInParts(proxy,ptsources,line,mynbest,mywindow,mynphrases)
         sys.stdout.write(str(trans)+"\n")
         sys.stdout.flush()
 
@@ -67,14 +67,20 @@ if __name__ == '__main__':
         mosesexec="/Users/guzmanhe/Projects/streamed_decoder/mosesdecoder/bin/moses"
         mypt="/Users/guzmanhe/Projects/streamed_decoder/sample-models/phrase-model/phrase-table"
         mosesargs="-f /Users/guzmanhe/Projects/streamed_decoder/sample-models/phrase-model/moses.ini --xml-input exclusive"
+        mynbest=10
+        mywindow=5
+        mynphrases=2
     else:
         mosesexec=sys.argv[1]
         mypt=sys.argv[2]
-        mosesargs=" ".join(sys.argv[3:])
+        mynbest=int(sys.argv[3])
+        mywindow=int(sys.argv[4])
+        mynphrases=int(sys.argv[5])
+        mosesargs=" ".join(sys.argv[6:])
 
 
     launcher = servertools.MosesServer(mosesexec,mosesargs)
     ptsources= servertools.loadPTSources(mypt)
-    main(launcher,ptsources)
+    main(launcher,ptsources,mynbest,mywindow,mynphrases)
 
 

@@ -41,7 +41,8 @@ class Result:
             self.result.append(item)
 
         #self.result.append(item)
-
+    def asString(self):
+        return " ".join(self.result)
     def __str__(self):
         if self.flush:
             return ""
@@ -179,11 +180,11 @@ def getFinal(nbest,nbest_size=100,length=0):
     return diff.items()
 
 def translate(proxy,params,string,nbest_size,to_keep=0,retry=0): #to_keep=0 means all words are kept
-    if retry > 10:
+    if retry > 3:
         return ("no_translation_possible",None)
 
     params['text']=string
-    #print "before translating::::: %s "%(string)
+    #print "before translating::%d::: %s "%(retry+1,string)
     try: 
         result = proxy.translate(params)
     except xmlrpclib.ProtocolError:
@@ -226,7 +227,7 @@ def connect():
 
 
 def createprevXML(prev_nbest,prev_to_trans,prev_res):
-    if prev_to_trans=="":
+    if prev_to_trans=="" or prev_res=="":
         return ""
     elif len(prev_nbest) ==0:
         string="<np translation=\"%s\">%s</np> <wall /> "%(prev_res.replace('"',"&quot;"),prev_to_trans.replace('"',"&quot;"))
@@ -235,57 +236,64 @@ def createprevXML(prev_nbest,prev_to_trans,prev_res):
     #print string
     return string
 
-def translateInParts(proxy,seg_model,text,nbest_size=10,window=3):
+def translateInParts(proxy,seg_model,text,nbest_size=10,window=3,segments=1):
 
-    
+    print proxy,seg_model,text,nbest_size,window,segments
 
     params = {"text":"", "align":"false", "report-all-factors":"false", "xml-input":"exclusive","nbest-size":nbest_size}
     
     prev_res=cur_res=prev_to_trans=prev_to_trans_xml=current=""
     prev_nbest=None
-    result=Result(flush=True)
+    result=Result(flush=False)
 
     now=time.time()
+    scounter=0
     #print "transating::%s"%(text)
     for word in text.split():
 
         if current != "":
             if  current +" " + word  not in seg_model:
+                scounter +=1
+
+                if scounter >= segments:
+                    scounter=0
+                    prev_to_trans_xml= createprevXML(prev_nbest,prev_to_trans,prev_res)
+                    if number.match(current) and " " not in current:
+                      current="<n translation=\"%s\">%s</n>"%(current,current)
+
+                    (cur_res,prev_nbest)=translate(proxy,params,prev_to_trans_xml + current,nbest_size)
+                    #print cur_res
+                    #print prev_nbest
+                    if (prev_nbest==None):
+                        prev_nbest=[(cur_res,1.0)]
+
+                    #print "cur res::",cur_res
+                    intersect=findMaxIntersect(prev_res,cur_res)
+                    #intersect= intersect-3
+                    #print intersect
+                    if intersect > window:
+                        #update result     
+
+                        cur_words=cur_res.split()
+                        cutoff = min (intersect,len(cur_words)-window)
+
+                        stable = " ".join(cur_words[:cutoff])
+                        result.append(stable.replace("&quot;","\""))
+                        prev_res=" ".join(cur_words[cutoff:])
+                        prev_nbest = pruneNbest(prev_nbest,stable,prev_res) #prune nbest
+                        #print "stable_hyp (%d)::%s"%(cutoff, stable)
+                        #print "unstable_hyp %d::: %s"%(intersect,prev_res)
+                        #print prev_nbest 
+                        #print "current_result :::%s" %(result)
+                        prev_to_trans=current
+                    else:
+                        prev_res=cur_res
+                        prev_to_trans=prev_to_trans+" "+current
                 
                 
-                prev_to_trans_xml= createprevXML(prev_nbest,prev_to_trans,prev_res)
-                if number.match(current) and " " not in current:
-                  current="<n translation=\"%s\">%s</n>"%(current,current)
-
-                (cur_res,prev_nbest)=translate(proxy,params,prev_to_trans_xml + current,nbest_size)
-                if (prev_nbest==None):
-                    prev_nbest=[(cur_res,1.0)]
-
-                #print "cur res::",cur_res
-                intersect=findMaxIntersect(prev_res,cur_res)
-                #intersect= intersect-3
-                #print intersect
-                if intersect > window:
-                    #update result     
-
-                    cur_words=cur_res.split()
-                    cutoff = min (intersect+1,len(cur_words)-window)
-
-                    stable = " ".join(cur_words[:cutoff])
-                    result.append(stable.replace("&quot;","\""))
-                    prev_res=" ".join(cur_words[cutoff:])
-                    prev_nbest = pruneNbest(prev_nbest,stable,prev_res) #prune nbest
-                    #print "stable_hyp (%d)::%s"%(cutoff, stable)
-                    #print "unstable_hyp %d::: %s"%(intersect,prev_res)
-                    #print prev_nbest 
-                    #print "current_result :::%s" %(result)
-                    prev_to_trans=current
+                    current = word
                 else:
-                    prev_res=cur_res
-                    prev_to_trans=prev_to_trans+" "+current
-                
-                
-                current = word
+                    current+=" " + word
                 #result+=" "+prev_res
             else:
                 current+=" " + word 
@@ -311,13 +319,16 @@ def testSegment(text=None):
     trans={}
     trials=10
     timestart=time.time()
+    window=3
+    nbest=100
+    segments=1
     for i in range(trials):
-        hyp=translateInParts(proxy,seg_model,text)
-        #print hyp
+        hyp=translateInParts(proxy,seg_model,text,nbest,window,segments)
+        print hyp
         try:
-            trans[str(hyp)]+=1.0
+            trans[hyp.asString()]+=1.0
         except KeyError:
-            trans[str(hyp)]=1.0
+            trans[hyp.asString()]=1.0
     #print trans.values()
     most_consistent=max(trans.values())
     totaltime=time.time()-timestart
