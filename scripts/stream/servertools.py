@@ -238,7 +238,7 @@ def createprevXML(prev_nbest,prev_to_trans,prev_res):
 
 def translateInParts(proxy,seg_model,text,nbest_size=10,window=3,segments=1):
 
-    print proxy,seg_model,text,nbest_size,window,segments
+    #print proxy,seg_model,text,nbest_size,window,segments
 
     params = {"text":"", "align":"false", "report-all-factors":"false", "xml-input":"exclusive","nbest-size":nbest_size}
     
