@@ -14,6 +14,7 @@ import subprocess
 import shlex
 import gzip
 import re
+import os
 
 number=re.compile('\d+')
 
@@ -65,12 +66,13 @@ class MosesServer:
         self.stream=None
 
     def launch(self):
-        string="%s %s --server "%(self.exe,self.args)
+        string="%s %s --server"%(self.exe,self.args)
         #print string
         args=shlex.split(string)
         #print args
+        FNULL = open(os.devnull, 'w')
         sys.stderr.write("launching moses with arguments %s\n"%(string))
-        self.stream = subprocess.Popen(args,shell=False,stdout=sys.stderr.fileno())
+        self.stream = subprocess.Popen(args,shell=False,stdout=FNULL)
 
     def isopen(self):
         return self.stream != None
