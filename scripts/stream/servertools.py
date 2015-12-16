@@ -14,8 +14,18 @@ import subprocess
 import shlex
 import gzip
 import re
+import logging
 
 number=re.compile('\d+')
+import os
+
+#os.environ['DEBUG']="1"
+
+if 'DEBUG' in os.environ:
+    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+else:
+    logging.basicConfig(stream=sys.stderr, level=logging.ERROR)
+
 
 class Result:
     def __init__(self,flush=False):
@@ -181,10 +191,11 @@ def getFinal(nbest,nbest_size=100,length=0):
 
 def translate(proxy,params,string,nbest_size,to_keep=0,retry=0): #to_keep=0 means all words are kept
     if retry > 3:
+        logging.warning('No translation found after %d trials'%retry)
         return ("no_translation_possible",None)
 
     params['text']=string
-    #print "before translating::%d::: %s "%(retry+1,string)
+    logging.debug("before translating::%d::: %s "%(retry+1,string))
     try: 
         result = proxy.translate(params)
     except xmlrpclib.ProtocolError:
@@ -192,16 +203,20 @@ def translate(proxy,params,string,nbest_size,to_keep=0,retry=0): #to_keep=0 mean
         return translate(proxy,params,string,nbest_size,to_keep,retry+1)
     
     res= clean(result['text'].encode("utf-8"))
-    #print "translated:::: %s"%(res)
+    logging.debug( "translated:::: %s"%(res))
+    nbest=None
     if 'nbest' in result:
         nbest=getFinal(result['nbest'],nbest_size,to_keep)
         #nbest.append((res,0.05))
     else:
-        (nres,nnbest)=translate(proxy,params,string,nbest_size,to_keep,retry+1)
-        if nnbest==None:
-            nbest=[(res,0.05)]
-        else:
-            nbest=nnbest
+        if nbest_size > 0:
+            logging.warning('retying translation')
+            (nres,nnbest)=translate(proxy,params,string,nbest_size,to_keep,retry+1)
+            if nnbest==None:
+                nbest=[(res,0.05)]
+            else:
+                nbest=nnbest
+
         #nbest=[(res,0.8)]
     return (res,nbest)
     
@@ -230,9 +245,9 @@ def createprevXML(prev_nbest,prev_to_trans,prev_res):
     if prev_to_trans=="" or prev_res=="":
         return ""
     elif len(prev_nbest) ==0:
-        string="<np translation=\"%s\">%s</np> <wall /> "%(prev_res.replace('"',"&quot;"),prev_to_trans.replace('"',"&quot;"))
+        string="<p translation=\"%s\">%s</p> <wall /> "%(prev_res.replace('"',"&quot;"),prev_to_trans.replace('"',"&quot;"))
     else: 
-        string= "<np translation=\"%s\" prob=\"%s\">%s</np> <wall /> "%("||".join([x[0] for x in prev_nbest]).replace('"',"&quot;"),"||".join(["%0.5f"%(x[1]) for x in prev_nbest]),prev_to_trans.replace('"',"&quot;"))
+        string= "<p translation=\"%s\" prob=\"%s\">%s</p> <wall /> "%("||".join([x[0] for x in prev_nbest]).replace('"',"&quot;"),"||".join(["%0.5f"%(x[1]) for x in prev_nbest]),prev_to_trans.replace('"',"&quot;"))
     #print string
     return string
 
@@ -252,12 +267,18 @@ def translateInParts(proxy,seg_model,text,nbest_size=10,window=3,segments=1):
     for word in text.split():
 
         if current != "":
-            if  current +" " + word  not in seg_model:
-                scounter +=1
+            if  current +" " + word  not in seg_model: #is the concatenation in the PT?
+
+                scounter +=1 #count it
 
                 if scounter >= segments:
                     scounter=0
-                    prev_to_trans_xml= createprevXML(prev_nbest,prev_to_trans,prev_res)
+                    if nbest_size >0 and window>0:
+
+                        prev_to_trans_xml= createprevXML(prev_nbest,prev_to_trans,prev_res)
+                    else:
+                        prev_to_trans_xml=""
+
                     if number.match(current) and " " not in current:
                       current="<n translation=\"%s\">%s</n>"%(current,current)
 
@@ -268,7 +289,10 @@ def translateInParts(proxy,seg_model,text,nbest_size=10,window=3,segments=1):
                         prev_nbest=[(cur_res,1.0)]
 
                     #print "cur res::",cur_res
-                    intersect=findMaxIntersect(prev_res,cur_res)
+                    if  window > 0 and nbest_size >0:
+                        intersect=findMaxIntersect(prev_res,cur_res)
+                    else:
+                        intersect=len(cur_res)
                     #intersect= intersect-3
                     #print intersect
                     if intersect > window:
@@ -281,8 +305,8 @@ def translateInParts(proxy,seg_model,text,nbest_size=10,window=3,segments=1):
                         result.append(stable.replace("&quot;","\""))
                         prev_res=" ".join(cur_words[cutoff:])
                         prev_nbest = pruneNbest(prev_nbest,stable,prev_res) #prune nbest
-                        #print "stable_hyp (%d)::%s"%(cutoff, stable)
-                        #print "unstable_hyp %d::: %s"%(intersect,prev_res)
+                        logging.debug("stable_hyp (%d)::%s"%(cutoff, stable))
+                        logging.debug("unstable_hyp %d::: %s"%(intersect,prev_res))
                         #print prev_nbest 
                         #print "current_result :::%s" %(result)
                         prev_to_trans=current
@@ -319,9 +343,9 @@ def testSegment(text=None):
     trans={}
     trials=10
     timestart=time.time()
-    window=3
-    nbest=100
-    segments=1
+    window=1
+    nbest=1
+    segments=3
     for i in range(trials):
         hyp=translateInParts(proxy,seg_model,text,nbest,window,segments)
         print hyp
